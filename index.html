@@ -7,65 +7,332 @@
 
     <link rel="stylesheet" href="src/Infinitum.css">
 
+    <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="src/Infinitum.js"></script>
+
     <style>
 
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        .wrapper {
+            background-color: #eee;
+
+            overflow: hidden;
+        }
+
+        .content {
+            font-family: sans-serif;
+
+            width: 80%;
+            min-width: 280px;
+            max-width: 1200px;
+            padding: 40px;
+            margin: 0px auto;
+
+            background-color: #fff;
+        }
+
+        h2 {
+            font-size: 32px;
+
+            margin-bottom: 24px;
+        }
+
+        .example1,
+        .example2,
+        .example3,
+        .example4,
+        .example5 {
+            font-size: 0;
+            white-space: nowrap;
+
+            margin-bottom: 32px;
+
+            background-color: #eee;
+        }
+
+        .example4,
+        .example5 {
+            padding: 10px;
+        }
+
+        .example1__item,
+        .example2__item,
+        .example3__item,
+        .example4__item,
+        .example5__item {
+            display: inline-block;
+        }
+
+        .example1__item,
+        .example2__item,
+        .example3__item {
+            font-size: 32px;
+
+            padding: 15px 20px;
+        }
+
+        .example4__item,
+        .example5__item {
+            line-height: 0;
+        }
 
     </style>
 
 </head>
 <body>
 
-    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quibusdam totam odit, inventore dicta quos ullam nesciunt. Est velit consequatur doloremque quis modi cum et debitis distinctio dolorum culpa assumenda, ex nemo iure ipsam quibusdam dolor tenetur adipisci inventore? Voluptatibus quo, rem asperiores, tempore molestias fugiat consequuntur labore laborum magni ducimus nam debitis quia saepe suscipit. Velit quis debitis veniam deleniti porro distinctio possimus commodi suscipit, quisquam et eaque veritatis temporibus, est magnam! Mollitia quo quas error illo. Nobis vero deserunt officiis temporibus beatae autem, nulla unde nesciunt ea modi culpa inventore mollitia vitae magni sequi debitis assumenda dolorem officia alias!
+    <div class="wrapper">
 
-    <h2>Example 1</h2>
+        <div class="content">
 
-    <div class="example1">
 
-        <div class="example1__wrapper">
+            <!--–––––––– ** EXAMPLE1 ** –––––––––-->
 
-            <div class="example1__item">Quibusdam totam</div>
-            <div class="example1__item">Est velit consequatur</div>
-            <div class="example1__item">Doloremque quis</div>
-            <div class="example1__item">Consectetur</div>
-            <div class="example1__item">Mollitia vitae magni sequi</div>
-            <div class="example1__item">Dolorum culpa assumenda</div>
+            <h2>Example 1</h2>
+
+            <div class="example1">
+
+                <div class="example1__wrapper">
+
+                    <div class="example1__item">Quibusdam totam</div>
+                    <div class="example1__item">Est velit consequatur</div>
+                    <div class="example1__item">Doloremque quis</div>
+                    <div class="example1__item">Consectetur</div>
+                    <div class="example1__item">Mollitia vitae magni sequi</div>
+                    <div class="example1__item">Dolorum culpa assumenda</div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example1 = new Infinitum({
+                        selector: ".example1"
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE1 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE2 ** –––––––––-->
+
+            <h2>Example 2</h2>
+
+            <div class="example2">
+
+                <div class="example2__wrapper">
+
+                    <div class="example2__item">Doloremque quis</div>
+                    <div class="example2__item">Est velit consequatur</div>
+                    <div class="example2__item">Quibusdam totam</div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example1 = new Infinitum({
+                        selector: ".example2"
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE2 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE3 ** –––––––––-->
+
+            <h2>Example 3</h2>
+
+            <div class="example3">
+
+                <div class="example3__wrapper">
+
+                    <div class="example3__item"><a href="#">Mollitia vitae magni sequi</a></div>
+                    <div class="example3__item"><a href="#">Doloremque quis</a></div>
+                    <div class="example3__item"><a href="#">Dolorum culpa assumenda</a></div>
+                    <div class="example3__item"><a href="#">Consectetur</a></div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example1 = new Infinitum({
+                        selector: ".example3"
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE3 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE4 ** –––––––––-->
+
+            <h2>Example 4</h2>
+
+            <div class="example4">
+
+                <div class="example4__wrapper">
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/1/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/2/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/3/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/4/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/5/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/6/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/7/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example1 = new Infinitum({
+                        selector: ".example4"
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE4 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE5 ** –––––––––-->
+
+            <h2>Example 5</h2>
+
+            <div class="example5">
+
+                <div class="example5__wrapper">
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/320/240/transport/1/); width: 320px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/transport/2/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/180/240/transport/3/); width: 180px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/300/240/transport/4/); width: 300px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/160/240/transport/5/); width: 160px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/400/240/transport/6/); width: 400px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/280/240/transport/7/); width: 280px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example1 = new Infinitum({
+                        selector: ".example5"
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE5 // –––––––––-->
+
 
         </div>
 
     </div>
-
-    <h2>Example 2</h2>
-
-    <div class="example2">
-
-        <div class="example2__wrapper">
-
-            <div class="example2__item">Doloremque quis</div>
-            <div class="example2__item">Est velit consequatur</div>
-            <div class="example2__item">Quibusdam totam</div>
-
-        </div>
-
-    </div>
-
-    <h2>Example 2</h2>
-
-    <div class="example2">
-
-        <div class="example2__wrapper">
-
-            <div class="example1__item"><a href="#">Mollitia vitae magni sequi</a></div>
-            <div class="example1__item"><a href="#">Doloremque quis</a></div>
-            <div class="example1__item"><a href="#">Dolorum culpa assumenda</a></div>
-            <div class="example1__item"><a href="#">Consectetur</a></div>
-
-        </div>
-
-    </div>
-
-
-    <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
-    <script src="src/Infinitum.js"></script>
 
 </body>
 </html>
