@@ -41,6 +41,7 @@
             margin-bottom: 24px;
         }
 
+        .example0,
         .example1,
         .example2,
         .example3,
@@ -59,6 +60,7 @@
             padding: 10px;
         }
 
+        .example0__item,
         .example1__item,
         .example2__item,
         .example3__item,
@@ -67,6 +69,7 @@
             display: inline-block;
         }
 
+        .example0__item,
         .example1__item,
         .example2__item,
         .example3__item {
@@ -75,9 +78,17 @@
             padding: 15px 20px;
         }
 
+        .example3__item {
+	        width: calc(50% - 40px);
+
+            overflow: hidden;
+        }
+
         .example4__item,
         .example5__item {
             line-height: 0;
+
+            filter: grayscale(1);
         }
 
     </style>
@@ -88,6 +99,36 @@
     <div class="wrapper">
 
         <div class="content">
+
+
+            <!--–––––––– ** EXAMPLE0 ** –––––––––-->
+
+            <h2>Example 0</h2>
+
+            <div class="example0">
+
+                <div class="example0__wrapper">
+
+                    <div class="example0__item">Quibusdam totam</div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example0 = new Infinitum({
+                        selector: ".example0"
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE0 // –––––––––-->
 
 
             <!--–––––––– ** EXAMPLE1 ** –––––––––-->

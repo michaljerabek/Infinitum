@@ -8,7 +8,7 @@
     .infinitum__item {
         opacity: 1;
 
-        transition-property: opacity;
+        transition-property: opacity, color, background, filter;
         transition-duration: 0.5s;
         will-change: opacity;
     }
@@ -41,4 +41,11 @@
 
     .infinitum__track--fast .infinitum__item--hide {
         transition-duration: 0.1s;
+    }
+
+    .infinitum .infinitum__item--current,
+    .infinitum .infinitum__item--current * {
+	    color: white;
+	    background: black;
+        filter: grayscale(0);
     }
