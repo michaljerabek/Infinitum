@@ -99,26 +99,11 @@
         };
     },
 
-    getClientValue = function (event, directionOrPointerIndex, direction) {
+    getClientValue = function (event, direction, pointerIndex) {
 
-        var pointerIndex = 0;
+        pointerIndex = pointerIndex || 0;
 
-        if (typeof directionOrPointerIndex === "number") {
-
-            pointerIndex = directionOrPointerIndex;
-
-            directionOrPointerIndex = direction;
-        }
-
-        if (typeof directionOrPointerIndex === "undefined") {
-
-            return {
-                x: getClientValue(event, pointerIndex, "x"),
-                y: getClientValue(event, pointerIndex, "y")
-            };
-        }
-
-        var prop = "client" + directionOrPointerIndex.toUpperCase();
+        var prop = "client" + direction.toUpperCase();
 
         event = event.originalEvent || event;
 
@@ -162,7 +147,6 @@
     };
 
     var DATA = {
-        transitionId: "transitionId",
         willLeft: "willLeft",
 
         fakeTransitionTimeout: "fakeTransitionTimeout"
@@ -182,8 +166,7 @@
     };
 
 
-    var idCounter = 1,
-        transitionIdCounter = 0;
+    var idCounter = 1;
 
     var Infinitum = window.Infinitum = function Infinitum(options) {
 
@@ -218,6 +201,7 @@
     Infinitum.EVENT = {
         tap: "tap",
         key: "key",
+        scroll: "scroll",
         change: "change"
     };
 
@@ -290,8 +274,8 @@
         this._setTrackPosition(getTranslate(this.$track).x);
         this.$track.css(TRANSITION_PROP, "none");
 
-        this._lastClientY = getClientValue(event, this._pointerIndex, "y");
-        this._lastClientX = getClientValue(event, this._pointerIndex, "x");
+        this._lastClientY = getClientValue(event, "y", this._pointerIndex);
+        this._lastClientX = getClientValue(event, "x", this._pointerIndex);
 
         this._trackMoved = false;
 
@@ -330,15 +314,15 @@
             }.bind(this));
         }
 
-        var clientY = getClientValue(event, this._pointerIndex, "y"),
-            clientX = getClientValue(event, this._pointerIndex, "x");
+        var clientY = getClientValue(event, "y", this._pointerIndex),
+            clientX = getClientValue(event, "x", this._pointerIndex);
 
-        if (this._fixVertical === null) {
+        if (this._byTouch && this._fixVertical === null) {
 
-            this._fixVertical = Math.abs(clientY - this._lastClientY) + 2 < Math.abs(clientX - this._lastClientX);
+            this._fixVertical = Math.abs(clientY - this._lastClientY) + 1 > Math.abs(clientX - this._lastClientX);
         }
 
-        if (!this._fixVertical) {
+        if (this._fixVertical) {
 
             return;
         }
@@ -373,12 +357,13 @@
 
             if ($item.length) {
 
-                var tapEvent = $.Event({
+                var tapEvent = $.extend({}, $.Event(), $.Event({
                     type: Infinitum.EVENT.tap,
                     target: $item[0],
                     fromElement: this.$currentItem[0],
-                    toElement: $item[0]
-                });
+                    toElement: $item[0],
+                    originalEvent: event.originalEvent
+                }));
 
                 this.$self.trigger(tapEvent);
 
@@ -451,25 +436,104 @@
 
         }.bind(this));
 
+        var keydownThrottle = null;
+
         this.$self.on("keydown" + this.NS, function (event) {
 
-            if ([37, 38, 39, 40].indexOf(event.which) === -1) {
+            if ([37, 38, 39, 40].indexOf(event.which) === -1 || keydownThrottle) {
 
                 return;
             }
 
+            keydownThrottle = true;
+
+            setTimeout(function() {
+
+                keydownThrottle = false;
+
+            }, 150);
+
             var $item = [37, 38].indexOf(event.which) === -1 ? this.findNext() : this.findPrev();
 
-            var keyEvent = $.Event({
+            var keyEvent = $.extend({}, $.Event(), $.Event({
                 type: Infinitum.EVENT.key,
                 target: $item[0],
                 fromElement: this.$currentItem[0],
-                toElement: $item[0]
-            });
+                toElement: $item[0],
+                originalEvent: event.originalEvent
+            }));
 
             this.$self.trigger(keyEvent);
 
             if (keyEvent.isDefaultPrevented()) {
+
+                return;
+            }
+
+            this._setCurrent($item, false, true);
+
+            event.preventDefault();
+
+        }.bind(this));
+
+        var scrollDebounce = null,
+            allowWheel = true;
+
+        $win.on("scroll" + this.NS, function (event) {
+
+            if (event.target !== document) {
+
+                return;
+            }
+
+            allowWheel = false;
+
+            clearTimeout(scrollDebounce);
+
+            scrollDebounce = setTimeout(function() {
+
+                allowWheel = true;
+
+            }, 300);
+        });
+
+        var wheelThrottle = null;
+
+        this.$self.on("mousewheel" + this.NS + " DOMMouseScroll" + this.NS, function (event) {
+
+            if (!allowWheel) {
+
+                return;
+            }
+
+            if (wheelThrottle) {
+
+                event.preventDefault();
+
+                return;
+            }
+
+            wheelThrottle = true;
+
+            setTimeout(function() {
+
+                wheelThrottle = false;
+
+            }, 150);
+
+            var $item = (event.originalEvent.detail || event.originalEvent.deltaY || event.originalEvent.deltaX) > 0 ? this.findNext() : this.findPrev();
+
+            var scrollEvent = $.extend({}, $.Event(), {
+                type: Infinitum.EVENT.scroll,
+                target: $item[0],
+                fromElement: this.$currentItem[0],
+                toElement: $item[0],
+                originalEvent: event.originalEvent
+            });
+
+            this.$self.trigger(scrollEvent);
+
+            if (scrollEvent.isDefaultPrevented()) {
 
                 return;
             }
@@ -630,7 +694,7 @@
             }.bind(this));
         }
 
-        this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + position + "px, 0px, 0px)" : "translateX(" + position + "px)");
+        this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + Math.round(position) + "px, 0px, 0px)" : "translateX(" + Math.round(position) + "px)");
 
         if (animate) {
 
@@ -718,10 +782,6 @@
 
                 $this.data(DATA.willLeft + _this.NS, parseFloat($prev.data(DATA.willLeft + _this.NS)) + Math.round($prev.outerWidth()));
 
-                var transitionId = transitionIdCounter++;
-
-                $this.data(DATA.transitionId + _this.NS, transitionId);
-
                 var fakeTransitionEnd,
 
                     onTransitionend = function (event) {
@@ -732,18 +792,15 @@
                         }
 
                         clearTimeout(fakeTransitionEnd);
-                        $this.data(DATA.transitionId + _this.NS) !== transitionId && console.log("transitionId");
-                        if ($this.data(DATA.transitionId + _this.NS) === transitionId) {
 
-                            $this.css({
-                                left: parseFloat($this.data(DATA.willLeft + _this.NS))
-                            });
+                        $this.css({
+                            left: parseFloat($this.data(DATA.willLeft + _this.NS))
+                        });
 
-                            $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
+                        $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
 
-                            $this.removeClass(CLASS.hide)
-                                .removeClass(CLASS.toEnd);
-                        }
+                        $this.removeClass(CLASS.hide)
+                            .removeClass(CLASS.toEnd);
 
                         $this.off(TRANSITIONEND + _this.NS);
                     };
@@ -830,10 +887,6 @@
 
                 $this.data(DATA.willLeft + _this.NS, parseFloat($next.data(DATA.willLeft + _this.NS)) - width);
 
-                var transitionId = transitionIdCounter++;
-
-                $this.data(DATA.transitionId + _this.NS, transitionId);
-
                 var fakeTransitionEnd,
 
                     onTransitionend = function (event) {
@@ -844,18 +897,15 @@
                         }
 
                         clearTimeout(fakeTransitionEnd);
-                        $this.data(DATA.transitionId + _this.NS) !== transitionId && console.log("transitionId");
-                        if ($this.data(DATA.transitionId + _this.NS) === transitionId) {
 
-                            $this.css({
-                                left: parseFloat($this.data(DATA.willLeft + _this.NS))
-                            });
+                        $this.css({
+                            left: parseFloat($this.data(DATA.willLeft + _this.NS))
+                        });
 
-                            $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
+                        $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
 
-                            $this.removeClass(CLASS.hide)
-                                .removeClass(CLASS.toStart);
-                        }
+                        $this.removeClass(CLASS.hide)
+                            .removeClass(CLASS.toStart);
 
                         $this.off(TRANSITIONEND + _this.NS);
                     };
@@ -1041,7 +1091,7 @@
 
         if ($item[0] !== this.$currentItem[0]) {
 
-            var changeEvent = $.Event({
+            var changeEvent = $.extend({}, $.Event(), {
                 type: Infinitum.EVENT.change,
                 target: $item[0],
                 fromElement: this.$currentItem[0],
@@ -1051,6 +1101,11 @@
             this.$self.trigger(changeEvent);
 
             if (changeEvent.isDefaultPrevented()) {
+
+                if (!noTrackMove) {
+
+                    this._moveToCurrent();
+                }
 
                 return;
             }
@@ -1070,10 +1125,15 @@
             return;
         }
 
-        var attrLeft = parseFloat($item.data(DATA.willLeft + this.NS)),
-            cssLeft = parseFloat($item.css("left")),
+        this._moveToCurrent();
+    };
 
-            itemPos = $item[0].getBoundingClientRect().left + (attrLeft - cssLeft) - this._selfRect.left;
+    Infinitum.prototype._moveToCurrent = function () {
+
+        var attrLeft = parseFloat(this.$currentItem.data(DATA.willLeft + this.NS)),
+            cssLeft = parseFloat(this.$currentItem.css("left")),
+
+            itemPos = this.$currentItem[0].getBoundingClientRect().left + (attrLeft - cssLeft) - this._selfRect.left;
 
         if (!itemPos) {
 
