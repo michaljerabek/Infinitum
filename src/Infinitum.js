@@ -149,7 +149,6 @@
         current: "infinitum__item--current",
         uncurrent: "infinitum__item--uncurrent",
         hide: "infinitum__item--hide",
-        clone: "infinitum__item--clone",
         toEnd: "infinitum__item--to-end",
         toStart: "infinitum__item--to-start",
 
@@ -164,11 +163,16 @@
     };
 
     var DATA = {
-        transitionId: "transitionId"
+        transitionId: "transitionId",
+        willLeft: "willLeft",
+
+        fakeTransitionTimeout: "fakeTransitionTimeout"
     };
 
     var DEFAULTS = {
         selector: CLASS.selector("self"),
+        trackSelector: null,
+        itemSelector: null,
 
         clearLeft: true
     };
@@ -180,6 +184,7 @@
     var Infinitum = window.Infinitum = function Infinitum(options) {
 
         this.id = NS + idCounter++;
+        this.NS = "." + this.id;
 
         this.initialized = false;
 
@@ -216,6 +221,7 @@
         RIGHT: 2
     };
 
+    Infinitum.FAKE_TRANSITION_TIMEOUT = 700;
 
     Infinitum.prototype.init = function (options) {
 
@@ -241,7 +247,7 @@
 
     Infinitum.prototype._onPointerStart = function (event) {
 
-        this.$track.off(TRANSITIONEND + "." + this.id);
+        this.$track.off(TRANSITIONEND + this.NS);
         cancelAnimationFrame(this._animate);
         this._shouldCancelRAF = true;
 
@@ -327,14 +333,16 @@
 
         this.$items.each(function (i, item) {
 
-            var attrLeft = parseFloat($t(item).attr("data-left")),
-                cssLeft = parseFloat($t(item).css("left"));
+            var $this = $t(item),
 
-            var left = item.getBoundingClientRect().left + (attrLeft - cssLeft);
+                attrLeft = parseFloat($this.data(DATA.willLeft + this.NS)),
+                cssLeft = parseFloat($this.css("left")),
 
-            if (closestLeftItemPos === null || Math.abs(closestLeftItemPos) > Math.abs(left - this._selfRect.left)) {
+                willLeft = item.getBoundingClientRect().left + (attrLeft - cssLeft);
 
-                closestLeftItemPos = left - this._selfRect.left;
+            if (closestLeftItemPos === null || Math.abs(closestLeftItemPos) > Math.abs(willLeft - this._selfRect.left)) {
+
+                closestLeftItemPos = willLeft - this._selfRect.left;
 
                 closestLeftItem = item;
             }
@@ -347,7 +355,7 @@
 
         this.$self.on("mousedown." + this.id + " touchstart." + this.id, this._onPointerStart.bind(this));
 
-        this.$self.on("click." + this.id + " touchstart." + this.id, CLASS.selector("item"), function (event) {
+        this.$self.on("click." + this.id, CLASS.selector("item"), function (event) {
 
             event.preventDefault();
         });
@@ -369,34 +377,36 @@
 
     Infinitum.prototype._prepareTrack = function () {
 
-        this.$track = $(this.$self).children()
-            .addClass(CLASS.track);
+        this.$track = this.options.trackSelector ? $(this.options.trackSelector) : this.$self.children().first();
 
-        this.$track.css({
-            minHeight: this.$track.css("height")
-        });
+        this.$track
+            .addClass(CLASS.track)
+            .css({
+                minHeight: this.$track.css("height")
+            });
     };
 
     Infinitum.prototype._prepareItems = function () {
 
-        this.$items = $(this.$track).children()
-            .addClass(CLASS.item);
+        this.$items = this.options.itemSelector ? this.$track.find(this.options.itemSelector) : this.$track.children();
+
+        this.$items.addClass(CLASS.item);
 
         var lastLeft = 0;
 
-        this.$items.each(function () {
+        this.$items.each(function (i, item) {
 
-            var $this = $t(this);
+            var $this = $t(item);
 
             $this.css({
                 position: "absolute",
                 left: lastLeft
             });
 
-            $this.attr("data-left", lastLeft);
+            $this.data(DATA.willLeft + this.NS, lastLeft);
 
             lastLeft += Math.round($this.outerWidth());
-        });
+        }.bind(this));
     };
 
     Infinitum.prototype._moveTrack = function (x, animate) {
@@ -414,7 +424,7 @@
 
             this._shouldCancelRAF = false;
 
-            this.$track.on(TRANSITIONEND + "." + this.id, function (event) {
+            this.$track.on(TRANSITIONEND + this.NS, function (event) {
 
                 if (event.originalEvent.target !== this.$track[0] || !event.originalEvent.propertyName.match(/transform/i)) {
 
@@ -425,7 +435,7 @@
 
                 this._shouldCancelRAF = true;
 
-                this.$track.off(TRANSITIONEND + "." + this.id);
+                this.$track.off(TRANSITIONEND + this.NS);
 
             }.bind(this));
         }
@@ -451,7 +461,7 @@
 
         this._sortItems();
 
-        var animationDoneAndCurrentNotFirst = (animation && this._shouldCancelRAF && this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current));
+        var animationDoneAndCurrentNotFirst = false && (animation && this._shouldCancelRAF && this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current));
 
         if (x < 0 || animationDoneAndCurrentNotFirst) {
 
@@ -505,12 +515,16 @@
 
             if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toStart) || animationDoneAndCurrentNotFirst) {
 
-                $this.off(TRANSITIONEND);
+                $this.off(TRANSITIONEND + _this.NS);
 
-//                $this.data("end") && $this.data("end")();
-                $this.data("to") && clearTimeout($this.data("to"));
+                var lastFakeTransition = $this.data(DATA.fakeTransitionTimeout + _this.NS);
 
-                var $prev = $this.prevAll(CLASS.selector("clone", true)).first();
+                if (lastFakeTransition) {
+
+                    clearTimeout(lastFakeTransition);
+                }
+
+                var $prev = $this.prevAll().first();
 
                 if (!$prev.length) {
 
@@ -521,46 +535,41 @@
 
                 var opacity = $this.css("opacity");
 
-//                $this.css("transition", "none");
-//                $this.css("opacity", opacity);
-                $this.addClass(CLASS.toEnd);
-                $this.removeClass(CLASS.toStart);
-                $this.removeClass(CLASS.hide);
+                $this.addClass(CLASS.toEnd)
+                    .removeClass(CLASS.toStart)
+                    .removeClass(CLASS.hide);
 
-                $this.attr("data-left", parseFloat($prev.attr("data-left")) + Math.round($prev.outerWidth()));
+                $this.data(DATA.willLeft + _this.NS, parseFloat($prev.data(DATA.willLeft + _this.NS)) + Math.round($prev.outerWidth()));
 
                 var transitionId = transitionIdCounter++;
 
-                $this.data(DATA.transitionId + "." + _this.id, transitionId);
+                $this.data(DATA.transitionId + _this.NS, transitionId);
 
                 var fakeTransitionEnd,
 
                     onTransitionend = function (event) {
 
-                        if (event && event.originalEvent.target !== $this[0] && (event.originalEvent.propertyName !== "opacity"/* || event.originalEvent.elapsedTime !== 1*/)) {
+                        if (event && event.originalEvent.target !== $this[0] && event.originalEvent.propertyName !== "opacity") {
 
                             return;
                         }
 
                         clearTimeout(fakeTransitionEnd);
-
-                        if ($this.data(DATA.transitionId + "." + _this.id) === transitionId) {
+                        $this.data(DATA.transitionId + _this.NS) !== transitionId && console.log("transitionId");
+                        if ($this.data(DATA.transitionId + _this.NS) === transitionId) {
 
                             $this.css({
-                                left: parseFloat($this.attr("data-left"))
+                                left: parseFloat($this.data(DATA.willLeft + _this.NS))
                             });
 
-                            $this.data("end", null);
-                            $this.data("to", null);
+                            $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
 
-                            $this.removeClass(CLASS.hide);
-                            $this.removeClass(CLASS.toEnd);
+                            $this.removeClass(CLASS.hide)
+                                .removeClass(CLASS.toEnd);
                         }
 
-                        $this.off(TRANSITIONEND);
+                        $this.off(TRANSITIONEND + _this.NS);
                     };
-
-                $this.data("end", onTransitionend);
 
                 if (!parseFloat(opacity)) {
 
@@ -568,15 +577,13 @@
 
                 } else {
 
-                    fakeTransitionEnd = setTimeout(onTransitionend, 1050);
+                    fakeTransitionEnd = setTimeout(onTransitionend, Infinitum.FAKE_TRANSITION_TIMEOUT);
 
-                    $this.data("to", fakeTransitionEnd);
+                    $this.data(DATA.fakeTransitionTimeout + _this.NS, fakeTransitionEnd);
 
-                    $this.on(TRANSITIONEND, onTransitionend);
+                    $this.on(TRANSITIONEND + _this.NS, onTransitionend);
 
-                    $this.css("transition", "");
                     $this.addClass(CLASS.hide);
-                    $this.css("opacity", "");
                 }
 
                 if ($this.hasClass(CLASS.uncurrent)) {
@@ -587,138 +594,31 @@
             }
         });
 
-        this._shouldCancelRAF && this.$leftItemsOver.each(function () {
+        if (this._shouldCancelRAF) {
 
-            var $this = $(this);
+            this.$leftItemsOver.each(function () {
 
-            if ($this.hasClass(CLASS.toEnd)) return;
+                var $this = $t(this);
 
-            $this.off(TRANSITIONEND);
+                if ($this.hasClass(CLASS.toEnd)) {
 
-            $this.data("end", null);
-            clearTimeout($this.data("to"));
-            $this.data("to", null);
+                    return;
+                }
 
-            $this.removeClass(CLASS.hide);
-            $this.removeClass(CLASS.toStart);
+                $this.off(TRANSITIONEND + _this.NS);
 
-            $this.attr("data-left", parseFloat($this.css("left")));
-        });
+                clearTimeout($this.data(DATA.fakeTransitionTimeout + _this.NS));
+                $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
+
+                $this.removeClass(CLASS.hide)
+                    .removeClass(CLASS.toStart);
+
+                $this.data(DATA.willLeft + _this.NS, parseFloat($this.css("left")));
+            });
+        }
+
     };
 
-//    Infinitum.prototype._moveLeftItemsOverToTheEnd = function (animationDoneAndCurrentNotFirst) {
-//
-//        var _this = this,
-//
-//            addedWidth = 0;
-//
-//        this.$leftItemsOver.each(function () {
-//
-//            var $this = $(this),
-//
-//                width = $this.outerWidth();
-//
-//            if (!_this.options.clearLeft && _this.endItemPos + addedWidth >= _this._selfRect.right/* + (width / 2)*/) {
-//
-//                if ($this.hasClass(CLASS.uncurrent)) {
-//
-//                    $this.removeClass(CLASS.uncurrent);
-//                    $this.removeClass(CLASS.current);
-//                }
-//
-//                return;
-//            }
-//
-//            if (animationDoneAndCurrentNotFirst && $this.hasClass(CLASS.current)) {
-//
-//                return;
-//            }
-//
-//            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toStart) || animationDoneAndCurrentNotFirst) {
-//
-//                var $prev = $this.prevAll(CLASS.selector("clone", true)).first();
-//
-//                if (!$prev.length) {
-//
-//                    $prev = _this.$items.last();
-//                }
-//
-//                addedWidth += width;
-//
-//                var opacity = $this.css("opacity");
-//
-//                $this.removeClass(CLASS.hide);
-//
-//                var $clone = $this.clone();
-//
-//                $clone.css(TRANSITION_PROP, "none");
-//                $clone.css("opacity", opacity);
-//
-//                $clone.addClass(CLASS.clone);
-//
-//                $this.addClass(CLASS.hide);
-//                $this.addClass(CLASS.toEnd);
-//                $this.removeClass(CLASS.toStart);
-//
-//                $this.after($clone);
-//
-//                $clone.after($this);
-//
-//                $this.css({
-//                    left: parseFloat($prev.css("left")) + $prev.outerWidth()
-//                });
-//
-//                var transitionId = transitionIdCounter++;
-//
-//                $this.data(DATA.transitionId + "." + _this.id, transitionId);
-//
-//                var fakeTransitionEnd,
-//
-//                    onTransitionend = function (event) {
-//
-//                        if (event && event.originalEvent.target !== $clone[0] && event.originalEvent.propertyName !== "opacity") {
-//
-//                            return;
-//                        }
-//
-//                        clearTimeout(fakeTransitionEnd);
-//
-//                        $clone.remove();
-//
-//                        if ($this.data(DATA.transitionId + "." + _this.id) === transitionId) {
-//
-//                            $this.removeClass(CLASS.hide);
-//                            $this.removeClass(CLASS.toEnd);
-//                        }
-//
-//                        $clone.off(TRANSITIONEND);
-//                    };
-//
-//                if (!parseFloat(opacity)) {
-//
-//                    onTransitionend();
-//
-//                } else {
-//
-//                    fakeTransitionEnd = setTimeout(onTransitionend, 1050);
-//
-//                    $clone.on(TRANSITIONEND, onTransitionend);
-//
-//                    $clone.css(TRANSITION_PROP, "");
-//                    $clone.addClass(CLASS.hide);
-//                    $clone.css("opacity", "");
-//                }
-//
-//                if ($this.hasClass(CLASS.uncurrent)) {
-//
-//                    $this.removeClass(CLASS.uncurrent);
-//                    $this.removeClass(CLASS.current);
-//                    $clone.removeClass(CLASS.current);
-//                }
-//            }
-//        });
-//    };
-//
     Infinitum.prototype._moveRightItemsOverToTheStart = function () {
 
         var _this = this,
@@ -738,10 +638,14 @@
 
             if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toEnd)) {
 
-                $this.off(TRANSITIONEND);
+                $this.off(TRANSITIONEND + _this.NS);
 
-//                $this.data("end") && $this.data("end")();
-                $this.data("to") && clearTimeout($this.data("to"));
+                var lastFakeTransition = $this.data(DATA.fakeTransitionTimeout + _this.NS);
+
+                if (lastFakeTransition) {
+
+                    clearTimeout(lastFakeTransition);
+                }
 
                 var $next = $this.nextAll(CLASS.selector("clone", true)).first();
 
@@ -754,46 +658,41 @@
 
                 var opacity = $this.css("opacity");
 
-//                $this.css("transition", "none");
-//                $this.css("opacity", opacity);
-                $this.addClass(CLASS.toStart);
-                $this.removeClass(CLASS.toEnd);
-                $this.removeClass(CLASS.hide);
+                $this.addClass(CLASS.toStart)
+                    .removeClass(CLASS.toEnd)
+                    .removeClass(CLASS.hide);
 
-                $this.attr("data-left", parseFloat($next.attr("data-left")) - Math.round($this.outerWidth()));
+                $this.data(DATA.willLeft + _this.NS, parseFloat($next.data(DATA.willLeft + _this.NS)) - width);
 
                 var transitionId = transitionIdCounter++;
 
-                $this.data(DATA.transitionId + "." + _this.id, transitionId);
+                $this.data(DATA.transitionId + _this.NS, transitionId);
 
                 var fakeTransitionEnd,
 
                     onTransitionend = function (event) {
 
-                        if (event && event.originalEvent.target !== $this[0] && (event.originalEvent.propertyName !== "opacity"/* || event.originalEvent.elapsedTime !== 1*/)) {
+                        if (event && event.originalEvent.target !== $this[0] && event.originalEvent.propertyName !== "opacity") {
 
                             return;
                         }
 
                         clearTimeout(fakeTransitionEnd);
-
-//                        if ($this.data(DATA.transitionId + "." + _this.id) === transitionId) {
+                        $this.data(DATA.transitionId + _this.NS) !== transitionId && console.log("transitionId");
+                        if ($this.data(DATA.transitionId + _this.NS) === transitionId) {
 
                             $this.css({
-                                left: parseFloat($this.attr("data-left"))
+                                left: parseFloat($this.data(DATA.willLeft + _this.NS))
                             });
 
-                            $this.data("end", null);
-                            $this.data("to", null);
+                            $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
 
-                            $this.removeClass(CLASS.hide);
-                            $this.removeClass(CLASS.toStart);
-//                        }
+                            $this.removeClass(CLASS.hide)
+                                .removeClass(CLASS.toStart);
+                        }
 
-                        $this.off(TRANSITIONEND);
+                        $this.off(TRANSITIONEND + _this.NS);
                     };
-
-                $this.data("end", onTransitionend);
 
                 if (!parseFloat(opacity)) {
 
@@ -801,15 +700,13 @@
 
                 } else {
 
-                    fakeTransitionEnd = setTimeout(onTransitionend, 1050);
+                    fakeTransitionEnd = setTimeout(onTransitionend, Infinitum.FAKE_TRANSITION_TIMEOUT);
 
-                    $this.data("to", fakeTransitionEnd);
+                    $this.data(DATA.fakeTransitionTimeout + _this.NS, fakeTransitionEnd);
 
-                    $this.on(TRANSITIONEND, onTransitionend);
+                    $this.on(TRANSITIONEND + _this.NS, onTransitionend);
 
-                    $this.css("transition", "");
                     $this.addClass(CLASS.hide);
-                    $this.css("opacity", "");
                 }
 
                 if ($this.hasClass(CLASS.uncurrent)) {
@@ -821,128 +718,29 @@
         });
 
 
-        this._shouldCancelRAF && this.$rightItemsOver.each(function () {
+        if (this._shouldCancelRAF) {
 
-            var $this = $(this);
+            this.$rightItemsOver.each(function () {
 
-            if ($this.hasClass(CLASS.toStart)) return;
+                var $this = $t(this);
 
-            clearTimeout($this.data("to"));
-            $this.off(TRANSITIONEND);
+                if ($this.hasClass(CLASS.toStart)) {
 
-            $this.data("end", null);
-            $this.data("to", null);
+                    return;
+                }
 
-            $this.attr("data-left", parseFloat($this.css("left")));
+                $this.off(TRANSITIONEND + _this.NS);
 
-            $this.removeClass(CLASS.hide);
-            $this.removeClass(CLASS.toEnd);
-        });
+                clearTimeout($this.data(DATA.fakeTransitionTimeout + _this.NS));
+                $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
 
+                $this.removeClass(CLASS.hide)
+                    .removeClass(CLASS.toEnd);
+
+                $this.data(DATA.willLeft + _this.NS, parseFloat($this.css("left")));
+            });
+        }
     };
-//
-//    Infinitum.prototype._moveRightItemsOverToTheStart = function () {
-//
-//        var _this = this,
-//
-//            addedWidth = 0;
-//
-//        this.$rightItemsOver.each(function () {
-//
-//            var $this = $(this),
-//
-//                width = $this.outerWidth();
-//
-//            if (_this.startItemPos - addedWidth <= _this._selfRect.left/* + (width / 2)*/) {
-//
-//                return;
-//            }
-//
-//            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toEnd)) {
-//
-//                var $next = $this.nextAll(CLASS.selector("clone", true)).first();
-//
-//                if (!$next.length) {
-//
-//                    $next = _this.$items.first();
-//                }
-//
-//                addedWidth += width;
-//
-//                var opacity = $this.css("opacity");
-//
-//                $this.removeClass(CLASS.hide);
-//
-//                var $clone = $this.clone();
-//
-//                $clone.css(TRANSITION_PROP, "none");
-//                $clone.css("opacity", opacity);
-//
-//                $clone.addClass(CLASS.clone);
-//
-//                $this.addClass(CLASS.hide);
-//                $this.addClass(CLASS.toStart);
-//                $this.removeClass(CLASS.toEnd);
-//
-//                $this.before($clone);
-//
-//                $clone.before($this);
-//
-//                $this.css({
-//                    left: parseFloat($next.css("left")) - $this.outerWidth()
-//                });
-//
-//                var transitionid = transitionIdCounter++;
-//
-//                $this.data(DATA.transitionId + "." + _this.id, transitionid);
-//
-//                var fakeTransitionEnd,
-//
-//                    onTransitionend = function (event) {
-//
-//                        if (event && event.originalEvent.target !== $clone[0] && event.originalEvent.propertyName !== "opacity") {
-//
-//                            return;
-//                        }
-//
-//                        clearTimeout(fakeTransitionEnd);
-//
-//                        $clone.remove();
-//
-//                        if ($this.data(DATA.transitionId + "." + _this.id) === transitionid) {
-//
-//                            $this.removeClass(CLASS.hide);
-//                            $this.removeClass(CLASS.toStart);
-//                        }
-//
-//                        $clone.off(TRANSITIONEND);
-//                    };
-//
-//                if (!parseFloat(opacity)) {
-//
-//                    onTransitionend();
-//
-//                } else {
-//
-//                    fakeTransitionEnd = setTimeout(onTransitionend, 1050);
-//
-//                    $clone.on(TRANSITIONEND, onTransitionend);
-//
-//                    $clone.css(TRANSITION_PROP, "");
-//                    $clone.addClass(CLASS.hide);
-//                    $clone.css("opacity", "");
-//                }
-//
-//                if ($this.hasClass(CLASS.uncurrent)) {
-//
-//                    $this.removeClass(CLASS.uncurrent);
-//                    $this.removeClass(CLASS.current);
-//                    $clone.removeClass(CLASS.current);
-//                }
-//            }
-//        });
-//
-//    };
 
     Infinitum.prototype._sortItems = function () {
 
@@ -959,34 +757,38 @@
 
         this.$items.each(function (i, item) {
 
-            var rect = item.getBoundingClientRect();
+            var $this = $t(item),
 
-            var attrLeft = parseFloat($t(item).attr("data-left")),
-                cssLeft = parseFloat($t(item).css("left"));
+                rect = item.getBoundingClientRect(),
 
-            if (this.startItemPosWll === null || this.startItemPosWll > rect.left + (attrLeft - cssLeft)) {
+                attrLeft = parseFloat($this.data(DATA.willLeft + this.NS)),
+                cssLeft = parseFloat($this.css("left")),
 
-                this.startItemPosWll = rect.left + (attrLeft - cssLeft);
+                diff = attrLeft - cssLeft;
+
+            if (this.startItemPosWll === null || this.startItemPosWll > rect.left + diff) {
+
+                this.startItemPosWll = rect.left + diff;
 
                 willStartItem = item;
 
                 willStartItemRect = {
-                    left: rect.left + (attrLeft - cssLeft)
+                    left: rect.left + diff
                 };
             }
 
-            if (this.endItemPosWill === null || this.endItemPosWill < rect.right + (attrLeft - cssLeft)) {
+            if (this.endItemPosWill === null || this.endItemPosWill < rect.right + diff) {
 
-                this.endItemPosWill = rect.right + (attrLeft - cssLeft);
+                this.endItemPosWill = rect.right + diff;
 
                 willEndItem = item;
             }
 
-            if (rect.left /*+ (attrLeft - cssLeft)*/ + (rect.width / 2) < this._selfRect.left) {
+            if (rect.left + (rect.width / 2) < this._selfRect.left) {
 
                 leftItemsOver.push(item);
 
-            } else if (rect.right/* + (attrLeft - cssLeft)*/ > this._selfRect.right) {
+            } else if (rect.right > this._selfRect.right) {
 
                 rightItemsOver.push(item);
 
@@ -1107,10 +909,10 @@
             $item.addClass(CLASS.current);
         }
 
-        var attrLeft = parseFloat($item.attr("data-left")),
-            cssLeft = parseFloat($item.css("left"));
+        var attrLeft = parseFloat($item.data(DATA.willLeft + this.NS)),
+            cssLeft = parseFloat($item.css("left")),
 
-        var itemPos = $item[0].getBoundingClientRect().left + (attrLeft - cssLeft) - this._selfRect.left;
+            itemPos = $item[0].getBoundingClientRect().left + (attrLeft - cssLeft) - this._selfRect.left;
 
         if (!itemPos) {
 
