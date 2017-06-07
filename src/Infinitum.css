@@ -25,6 +25,8 @@
 
         transition-duration: 0.2s;
         transition-timing-function: ease;
+
+        pointer-events: none;
     }
 
     .infinitum__track--slow .infinitum__item {

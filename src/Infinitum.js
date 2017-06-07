@@ -122,7 +122,7 @@
 
         event = event.originalEvent || event;
 
-        return typeof event[prop] === "number" ? event[prop] : event.touches[pointerIndex][prop];
+        return typeof event[prop] === "number" ? event[prop] : event.touches[pointerIndex] ? event.touches[pointerIndex][prop] : 0;
     },
 
     $t = (function() {
@@ -174,8 +174,11 @@
         itemSelector: null,
 
         clearLeft: true,
+
         live: true,
-        animateLive: false
+        animateLive: false,
+
+        refreshItems: false
     };
 
 
@@ -214,6 +217,7 @@
 
     Infinitum.EVENT = {
         tap: "tap",
+        key: "key",
         change: "change"
     };
 
@@ -248,6 +252,37 @@
 
     Infinitum.prototype._onPointerStart = function (event) {
 
+        this._byMouse = !!event.type.match(/mouse/);
+        this._byTouch = !!event.type.match(/touch/);
+
+        if (this._hasPointer || (this._byMouse && event.button !== 0)) {
+
+            event.preventDefault();
+
+            return;
+        }
+
+        this.$self.focus();
+
+        this._hasPointer = true;
+        this._pointerIndex = 0;
+
+        if (this._byTouch) {
+
+            this._hasPointer = event.originalEvent.changedTouches[0].identifier;
+
+            $.each(event.originalEvent.touches, function (i, touch) {
+
+                if (touch.identifier === this._hasPointer) {
+
+                    this._pointerIndex = i;
+                }
+
+            }.bind(this));
+        }
+
+        this._fixVertical = null;
+
         this.$track.off(TRANSITIONEND + this.NS);
         cancelAnimationFrame(this._animate);
         this._shouldCancelRAF = true;
@@ -255,37 +290,84 @@
         this._setTrackPosition(getTranslate(this.$track).x);
         this.$track.css(TRANSITION_PROP, "none");
 
-        this._lastClinetX = getClientValue(event, 0, "x");
+        this._lastClientY = getClientValue(event, this._pointerIndex, "y");
+        this._lastClientX = getClientValue(event, this._pointerIndex, "x");
 
         this._trackMoved = false;
 
-        $win.on("mousemove." + this.id + " touchmove." + this.id, this._onPointerMove.bind(this));
+        $win.on("mousemove" + this.NS, this._onPointerMove.bind(this));
 
-        $win.one("mouseup." + this.id + " touchend." + this.id, this._onPointerEnd.bind(this));
+        $win.one("mouseup" + this.NS, this._onPointerEnd.bind(this));
 
-        return false;
+        this.$self.on("touchmove" + this.NS, this._onPointerMove.bind(this));
+
+        this.$self.one("touchend" + this.NS, this._onPointerEnd.bind(this));
+
+        if (!this._byTouch) {
+
+            event.preventDefault();
+        }
     };
 
     Infinitum.prototype._onPointerMove = function (event) {
 
-        var clientX = getClientValue(event, 0, "x");
+        if (!this._hasPointer) {
 
-        this._move(clientX - this._lastClinetX);
+            event.preventDefault();
 
-        this._lastDir = clientX > this._lastClinetX ? Infinitum.DIR.RIGHT : Infinitum.DIR.LEFT;
+            return;
+        }
 
-        this._trackMoved = clientX !== this._lastClinetX || this._trackMoved;
+        if (event.type.match(/touch/)) {
 
-        this._lastClinetX = clientX;
+            $.each(event.originalEvent.touches, function (i, touch) {
 
-        return false;
+                if (touch.identifier === this._hasPointer) {
+
+                    this._pointerIndex = i;
+                }
+
+            }.bind(this));
+        }
+
+        var clientY = getClientValue(event, this._pointerIndex, "y"),
+            clientX = getClientValue(event, this._pointerIndex, "x");
+
+        if (this._fixVertical === null) {
+
+            this._fixVertical = Math.abs(clientY - this._lastClientY) + 2 < Math.abs(clientX - this._lastClientX);
+        }
+
+        if (!this._fixVertical) {
+
+            return;
+        }
+
+        this._move(clientX - this._lastClientX);
+
+        this._lastDir = clientX > this._lastClientX ? Infinitum.DIR.RIGHT : Infinitum.DIR.LEFT;
+
+        this._trackMoved = clientX !== this._lastClientX || this._trackMoved;
+
+        this._lastClientX = clientX;
+        this._lastClientY = clientY;
+
+        event.preventDefault();
     };
 
     Infinitum.prototype._onPointerEnd = function (event) {
 
-        $win.off("mousemove." + this.id + " touchmove." + this.id);
+        this._hasPointer = false;
 
-        if (!this._trackMoved) {
+        if (this._byMouse && event.button !== 0) {
+
+            return;
+        }
+
+        $win.off("mousemove" + this.NS);
+        this.$self.off("touchmove" + this.NS);
+
+        if (!this._trackMoved && this._fixVertical === null) {
 
             var $item = $(event.target).closest(CLASS.selector("item"));
 
@@ -313,7 +395,7 @@
 
         this.setCurrent(this._findCurrentItem());
 
-        return false;
+        event.preventDefault();
     };
 
     Infinitum.prototype._findCurrentItem = function () {
@@ -354,18 +436,107 @@
 
     Infinitum.prototype._initEvents = function () {
 
-        this.$self.on("mousedown." + this.id + " touchstart." + this.id, this._onPointerStart.bind(this));
+        this.$self.on("mousedown" + this.NS + " touchstart" + this.NS, this._onPointerStart.bind(this));
 
-        this.$self.on("click." + this.id, CLASS.selector("item"), function (event) {
+        this.$self.on("click" + this.NS, CLASS.selector("item"), function (event) {
+
+            if (!this._byMouse && !this._byTouch) {
+
+                this._onPointerEnd(event);
+            }
+
+            this._byMouse = false;
 
             event.preventDefault();
-        });
+
+        }.bind(this));
+
+        this.$self.on("keydown" + this.NS, function (event) {
+
+            if ([37, 38, 39, 40].indexOf(event.which) === -1) {
+
+                return;
+            }
+
+            var $item = [37, 38].indexOf(event.which) === -1 ? this.findNext() : this.findPrev();
+
+            var keyEvent = $.Event({
+                type: Infinitum.EVENT.key,
+                target: $item[0],
+                fromElement: this.$currentItem[0],
+                toElement: $item[0]
+            });
+
+            this.$self.trigger(keyEvent);
+
+            if (keyEvent.isDefaultPrevented()) {
+
+                return;
+            }
+
+            this._setCurrent($item, false, true);
+
+            event.preventDefault();
+
+        }.bind(this));
+
+        var resizeDebounce = null;
+
+        $win.on("resize" + this.NS, function () {
+
+            clearTimeout(resizeDebounce);
+
+            resizeDebounce = setTimeout(this.softRefresh.bind(this), 50);
+
+        }.bind(this));
     };
 
-    Infinitum.prototype._prepareSelf = function () {
+    Infinitum.prototype.findNext = function ($from) {
 
-        this.$self = $(this.options.selector)
-            .addClass(CLASS.self);
+        $from = $from || this.$currentItem;
+
+        var $next = $from.next();
+
+        if (!$next.length) {
+
+            $next = this.$items.first();
+        }
+
+        return $next;
+    };
+
+    Infinitum.prototype.findPrev = function ($from) {
+
+        $from = $from || this.$currentItem;
+
+        var $prev = $from.prev();
+
+        if (!$prev.length) {
+
+            $prev = this.$items.last();
+        }
+
+        return $prev;
+    };
+
+    Infinitum.prototype.next = function () {
+
+        this._setCurrent(this.findNext(), false, true);
+    };
+
+    Infinitum.prototype.prev = function () {
+
+        this._setCurrent(this.findPrev(), false, true);
+    };
+
+    Infinitum.prototype._prepareSelf = function (onlyRect) {
+
+        if (!onlyRect) {
+
+            this.$self = $(this.options.selector)
+                .attr("tabindex", 0)
+                .addClass(CLASS.self);
+        }
 
         this._selfRect = {};
         this._origSelfRect = this.$self[0].getBoundingClientRect();
@@ -385,6 +556,8 @@
             .css({
                 minHeight: this.$track.css("height")
             });
+
+        this._setTrackPosition(0, false);
     };
 
     Infinitum.prototype._prepareItems = function () {
@@ -413,6 +586,17 @@
         this._sortItems();
 
         this._setCurrent(this._findCurrentItem());
+    };
+
+    Infinitum.prototype.softRefresh = function (items) {
+
+        this._prepareSelf(true);
+
+        if ((this.options.refreshItems && items !== false) || items) {
+
+            this._prepareTrack();
+            this._prepareItems();
+        }
     };
 
     Infinitum.prototype._moveTrack = function (x, animate) {
@@ -467,7 +651,7 @@
 
         this._sortItems();
 
-        var animationDoneAndCurrentNotFirst = false && (animation && this._shouldCancelRAF && this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current));
+        var animationDoneAndCurrentNotFirst = (animation && this._shouldCancelRAF && this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current));
 
         if (x < 0 || animationDoneAndCurrentNotFirst) {
 
@@ -522,12 +706,7 @@
                     clearTimeout(lastFakeTransition);
                 }
 
-                var $prev = $this.prevAll().first();
-
-                if (!$prev.length) {
-
-                    $prev = _this.$items.last();
-                }
+                var $prev = _this.findPrev($this);
 
                 addedWidth += width;
 
@@ -639,12 +818,7 @@
                     clearTimeout(lastFakeTransition);
                 }
 
-                var $next = $this.nextAll(CLASS.selector("clone", true)).first();
-
-                if (!$next.length) {
-
-                    $next = _this.$items.first();
-                }
+                var $next = _this.findNext($this);
 
                 addedWidth += width;
 
@@ -911,7 +1085,7 @@
 
     Infinitum.prototype.setCurrent = function ($item) {
 
-        this._setCurrent($item, false);
+        this._setCurrent($item, false, true);
     };
 
     Infinitum.prototype.on = function (event, handler) {
