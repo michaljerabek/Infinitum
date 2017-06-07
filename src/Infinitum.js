@@ -147,7 +147,6 @@
         item: "infinitum__item",
 
         current: "infinitum__item--current",
-        uncurrent: "infinitum__item--uncurrent",
         hide: "infinitum__item--hide",
         toEnd: "infinitum__item--to-end",
         toStart: "infinitum__item--to-start",
@@ -174,7 +173,9 @@
         trackSelector: null,
         itemSelector: null,
 
-        clearLeft: true
+        clearLeft: true,
+        live: true,
+        animateLive: false
     };
 
 
@@ -304,13 +305,13 @@
                     return;
                 }
 
-                this._setCurrent($item, true);
+                this._setCurrent($item, false, true);
             }
 
             return !$item.length;
         }
 
-        this._setCurrent(this._findCurrentItem());
+        this.setCurrent(this._findCurrentItem());
 
         return false;
     };
@@ -406,7 +407,12 @@
             $this.data(DATA.willLeft + this.NS, lastLeft);
 
             lastLeft += Math.round($this.outerWidth());
+
         }.bind(this));
+
+        this._sortItems();
+
+        this._setCurrent(this._findCurrentItem());
     };
 
     Infinitum.prototype._moveTrack = function (x, animate) {
@@ -472,11 +478,9 @@
             this._moveRightItemsOverToTheStart();
         }
 
-        if (!this.options.clearLeft) {
+        if (this.options.live && (this.options.animateLive || !animation)) {
 
-            this.$insideItems.filter(CLASS.selector("uncurrent"))
-                .removeClass(CLASS.current)
-                .removeClass(CLASS.uncurrent);
+            this._setCurrent(this._findCurrentItem(), true);
         }
 
         if (animation && !this._shouldCancelRAF) {
@@ -498,12 +502,6 @@
                 width = Math.round($this.outerWidth());
 
             if (!_this.options.clearLeft && _this.endItemPosWill + addedWidth >= _this._selfRect.right/* + (width / 2)*/) {
-
-                if ($this.hasClass(CLASS.uncurrent)) {
-
-                    $this.removeClass(CLASS.uncurrent);
-                    $this.removeClass(CLASS.current);
-                }
 
                 return;
             }
@@ -584,12 +582,6 @@
                     $this.on(TRANSITIONEND + _this.NS, onTransitionend);
 
                     $this.addClass(CLASS.hide);
-                }
-
-                if ($this.hasClass(CLASS.uncurrent)) {
-
-                    $this.removeClass(CLASS.uncurrent);
-                    $this.removeClass(CLASS.current);
                 }
             }
         });
@@ -707,12 +699,6 @@
                     $this.on(TRANSITIONEND + _this.NS, onTransitionend);
 
                     $this.addClass(CLASS.hide);
-                }
-
-                if ($this.hasClass(CLASS.uncurrent)) {
-
-                    $this.removeClass(CLASS.uncurrent);
-                    $this.removeClass(CLASS.current);
                 }
             }
         });
@@ -872,7 +858,7 @@
         }
     };
 
-    Infinitum.prototype._setCurrent = function ($item, defer) {
+    Infinitum.prototype._setCurrent = function ($item, noTrackMove, autoOnLive) {
 
         if (!$item || !$item[0]) {
 
@@ -895,11 +881,7 @@
                 return;
             }
 
-            if (defer) {
-
-                this.$currentItem.addClass(CLASS.uncurrent);
-
-            } else {
+            if (!autoOnLive || !this.options.live || !this.options.animateLive) {
 
                 this.$currentItem.removeClass(CLASS.current);
             }
@@ -907,6 +889,11 @@
             this.$currentItem = $item;
 
             $item.addClass(CLASS.current);
+        }
+
+        if (noTrackMove) {
+
+            return;
         }
 
         var attrLeft = parseFloat($item.data(DATA.willLeft + this.NS)),
@@ -924,7 +911,7 @@
 
     Infinitum.prototype.setCurrent = function ($item) {
 
-        this._setCurrent($item, true);
+        this._setCurrent($item, false);
     };
 
     Infinitum.prototype.on = function (event, handler) {
