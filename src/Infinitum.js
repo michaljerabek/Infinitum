@@ -99,6 +99,32 @@
         };
     },
 
+    getClientValue = function (event, directionOrPointerIndex, direction) {
+
+        var pointerIndex = 0;
+
+        if (typeof directionOrPointerIndex === "number") {
+
+            pointerIndex = directionOrPointerIndex;
+
+            directionOrPointerIndex = direction;
+        }
+
+        if (typeof directionOrPointerIndex === "undefined") {
+
+            return {
+                x: getClientValue(event, pointerIndex, "x"),
+                y: getClientValue(event, pointerIndex, "y")
+            };
+        }
+
+        var prop = "client" + directionOrPointerIndex.toUpperCase();
+
+        event = event.originalEvent || event;
+
+        return typeof event[prop] === "number" ? event[prop] : event.touches[pointerIndex][prop];
+    },
+
     $t = (function() {
 
         var $temp = $([null]);
@@ -121,8 +147,11 @@
         item: "infinitum__item",
 
         current: "infinitum__item--current",
+        uncurrent: "infinitum__item--uncurrent",
         hide: "infinitum__item--hide",
         clone: "infinitum__item--clone",
+        toEnd: "infinitum__item--to-end",
+        toStart: "infinitum__item--to-start",
 
         speed1: "infinitum__track--slow",
         speed2: "infinitum__track--medium",
@@ -134,36 +163,58 @@
         }
     };
 
+    var DATA = {
+        transitionId: "transitionId"
+    };
+
     var DEFAULTS = {
-        selector: CLASS.selector("self")
+        selector: CLASS.selector("self"),
+
+        clearLeft: true
     };
 
 
+    var idCounter = 1,
+        transitionIdCounter = 0;
+
     var Infinitum = window.Infinitum = function Infinitum(options) {
+
+        this.id = NS + idCounter++;
 
         this.initialized = false;
 
         this._animate = this._animate.bind(this);
 
         this._shouldCancelRAF = true;
-        this._speed = [5, 5, 5, 5, 5];
+        this._speed = [7, 7, 7, 7, 7];
 
         this._lastTrackX = 0;
 
-        this.startItemPos = 0;
-        this.endItemPos = 0;
+        this.startItemPosWll = 0;
+        this.endItemPosWill = 0;
 
-//        this.$startItem = $();
-//        this.$endItem = $();
-//        this.$leftItemsOver = $();
-//        this.$rightItemsOver = $();
-//        this.$insideItems = $();
+        this.$currentItem = $();
+        this.$willStartItem = null;
+        this.$willEndItem = null;
+        this.$leftItemsOver = null;
+        this.$rightItemsOver = null;
+        this.$insideItems = null;
 
         this.init(options);
     };
 
     Infinitum.CLASS = CLASS;
     Infinitum.DEFAULTS = DEFAULTS;
+
+    Infinitum.EVENT = {
+        tap: "tap",
+        change: "change"
+    };
+
+    Infinitum.DIR = {
+        LEFT: 1,
+        RIGHT: 2
+    };
 
 
     Infinitum.prototype.init = function (options) {
@@ -175,7 +226,7 @@
 
         this.options = options || this.options || {};
 
-        this.options = $.extend({}, this.options);
+        this.options = $.extend({}, DEFAULTS, this.options);
 
         this._prepareSelf();
 
@@ -190,78 +241,113 @@
 
     Infinitum.prototype._onPointerStart = function (event) {
 
+        this.$track.off(TRANSITIONEND + "." + this.id);
         cancelAnimationFrame(this._animate);
         this._shouldCancelRAF = true;
 
+        this._setTrackPosition(getTranslate(this.$track).x);
         this.$track.css(TRANSITION_PROP, "none");
 
-        this._lastClinetX = event.clientX;
+        this._lastClinetX = getClientValue(event, 0, "x");
 
-        $win.on("mousemove." + NS + " touchmove." + NS, this._onPointerMove.bind(this));
+        this._trackMoved = false;
 
-        $win.one("mouseup." + NS + " touchend." + NS, this._onPointerEnd.bind(this));
+        $win.on("mousemove." + this.id + " touchmove." + this.id, this._onPointerMove.bind(this));
+
+        $win.one("mouseup." + this.id + " touchend." + this.id, this._onPointerEnd.bind(this));
 
         return false;
     };
 
     Infinitum.prototype._onPointerMove = function (event) {
 
-        this._move(event.clientX - this._lastClinetX);
+        var clientX = getClientValue(event, 0, "x");
 
-        this._lastClinetX = event.clientX;
+        this._move(clientX - this._lastClinetX);
+
+        this._lastDir = clientX > this._lastClinetX ? Infinitum.DIR.RIGHT : Infinitum.DIR.LEFT;
+
+        this._trackMoved = clientX !== this._lastClinetX || this._trackMoved;
+
+        this._lastClinetX = clientX;
 
         return false;
     };
 
-    Infinitum.prototype._onPointerEnd = function () {
+    Infinitum.prototype._onPointerEnd = function (event) {
 
-        var closestItem = this._findClosestItem();
+        $win.off("mousemove." + this.id + " touchmove." + this.id);
 
-        this.$track.children().removeClass(CLASS.current);
+        if (!this._trackMoved) {
 
-        closestItem.$el.addClass(CLASS.current);
+            var $item = $(event.target).closest(CLASS.selector("item"));
 
-        $win.off("mousemove." + NS + " touchmove." + NS);
+            if ($item.length) {
 
-        if (!closestItem.pos) {
+                var tapEvent = $.Event({
+                    type: Infinitum.EVENT.tap,
+                    target: $item[0],
+                    fromElement: this.$currentItem[0],
+                    toElement: $item[0]
+                });
 
-            return false;
+                this.$self.trigger(tapEvent);
+
+                if (tapEvent.isDefaultPrevented()) {
+
+                    return;
+                }
+
+                this._setCurrent($item, true);
+            }
+
+            return !$item.length;
         }
 
-        this._moveTrack(-closestItem.pos, true);
+        this._setCurrent(this._findCurrentItem());
 
         return false;
+    };
+
+    Infinitum.prototype._findCurrentItem = function () {
+
+        if (this._lastDir === Infinitum.DIR.LEFT || !this.options.clearLeft) {
+
+            return this._findClosestItem();
+        }
+
+        return this.$willStartItem;
     };
 
     Infinitum.prototype._findClosestItem = function () {
 
         var closestLeftItemPos = null,
 
-            $closestLeftItem;
+            closestLeftItem;
 
         this.$items.each(function (i, item) {
 
-            var left = item.getBoundingClientRect().left;
+            var attrLeft = parseFloat($t(item).attr("data-left")),
+                cssLeft = parseFloat($t(item).css("left"));
+
+            var left = item.getBoundingClientRect().left + (attrLeft - cssLeft);
 
             if (closestLeftItemPos === null || Math.abs(closestLeftItemPos) > Math.abs(left - this._selfRect.left)) {
 
                 closestLeftItemPos = left - this._selfRect.left;
 
-                $closestLeftItem = $(item);
+                closestLeftItem = item;
             }
         }.bind(this));
 
-        return {
-            pos: closestLeftItemPos,
-            $el: $closestLeftItem
-        };
+        return $(closestLeftItem);
     };
 
     Infinitum.prototype._initEvents = function () {
 
-        this.$self.on("mousedown." + NS + " touchstart." + NS, this._onPointerStart.bind(this));
+        this.$self.on("mousedown." + this.id + " touchstart." + this.id, this._onPointerStart.bind(this));
 
-        this.$self.on("click." + NS + " touchstart." + NS, CLASS.selector("item"), function (event) {
+        this.$self.on("click." + this.id + " touchstart." + this.id, CLASS.selector("item"), function (event) {
 
             event.preventDefault();
         });
@@ -307,7 +393,9 @@
                 left: lastLeft
             });
 
-            lastLeft += $this.outerWidth();
+            $this.attr("data-left", lastLeft);
+
+            lastLeft += Math.round($this.outerWidth());
         });
     };
 
@@ -326,11 +414,18 @@
 
             this._shouldCancelRAF = false;
 
-            this.$track.one(TRANSITIONEND, function () {
+            this.$track.on(TRANSITIONEND + "." + this.id, function (event) {
+
+                if (event.originalEvent.target !== this.$track[0] || !event.originalEvent.propertyName.match(/transform/i)) {
+
+                    return;
+                }
 
                 cancelAnimationFrame(this._animate);
 
                 this._shouldCancelRAF = true;
+
+                this.$track.off(TRANSITIONEND + "." + this.id);
 
             }.bind(this));
         }
@@ -352,15 +447,11 @@
         if (!animation) {
 
             this._moveTrack(x);
-
-        } else if (!this._shouldCancelRAF) {
-
-            requestAnimationFrame(this._animate);
         }
 
         this._sortItems();
 
-        var animationDoneAndCurrentNotFirst = (animation && this._shouldCancelRAF && this.$startItem.length && !this.$startItem.hasClass(CLASS.current));
+        var animationDoneAndCurrentNotFirst = (animation && this._shouldCancelRAF && this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current));
 
         if (x < 0 || animationDoneAndCurrentNotFirst) {
 
@@ -370,19 +461,54 @@
 
             this._moveRightItemsOverToTheStart();
         }
-    };
 
-    var counter = 0;
+        if (!this.options.clearLeft) {
+
+            this.$insideItems.filter(CLASS.selector("uncurrent"))
+                .removeClass(CLASS.current)
+                .removeClass(CLASS.uncurrent);
+        }
+
+        if (animation && !this._shouldCancelRAF) {
+
+            requestAnimationFrame(this._animate);
+        }
+    };
 
     Infinitum.prototype._moveLeftItemsOverToTheEnd = function (animationDoneAndCurrentNotFirst) {
 
-        var _this = this;
+        var _this = this,
 
-        this.$leftItemsOver.filter(animationDoneAndCurrentNotFirst ? CLASS.selector("current", true) : "*").each(function () {
+            addedWidth = 0;
 
-            var $this = $(this);
+        this.$leftItemsOver.each(function () {
 
-            if (!$this.hasClass(CLASS.hide) || $this.hasClass("right") || animationDoneAndCurrentNotFirst) {
+            var $this = $(this),
+
+                width = Math.round($this.outerWidth());
+
+            if (!_this.options.clearLeft && _this.endItemPosWill + addedWidth >= _this._selfRect.right/* + (width / 2)*/) {
+
+                if ($this.hasClass(CLASS.uncurrent)) {
+
+                    $this.removeClass(CLASS.uncurrent);
+                    $this.removeClass(CLASS.current);
+                }
+
+                return;
+            }
+
+            if (animationDoneAndCurrentNotFirst && $this.hasClass(CLASS.current)) {
+
+                return;
+            }
+
+            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toStart) || animationDoneAndCurrentNotFirst) {
+
+                $this.off(TRANSITIONEND);
+
+//                $this.data("end") && $this.data("end")();
+                $this.data("to") && clearTimeout($this.data("to"));
 
                 var $prev = $this.prevAll(CLASS.selector("clone", true)).first();
 
@@ -391,54 +517,50 @@
                     $prev = _this.$items.last();
                 }
 
+                addedWidth += width;
+
                 var opacity = $this.css("opacity");
 
+//                $this.css("transition", "none");
+//                $this.css("opacity", opacity);
+                $this.addClass(CLASS.toEnd);
+                $this.removeClass(CLASS.toStart);
                 $this.removeClass(CLASS.hide);
 
-                var $clone = $this.clone();
+                $this.attr("data-left", parseFloat($prev.attr("data-left")) + Math.round($prev.outerWidth()));
 
-                $clone.css("transition", "none");
-                $clone.css("opacity", opacity);
+                var transitionId = transitionIdCounter++;
 
-                $clone.addClass(CLASS.clone);
-
-                $this.addClass(CLASS.hide);
-                $this.addClass("left");
-                $this.removeClass("right");
-
-                $this.after($clone);
-
-                $clone.after($this);
-
-                $this.css({
-                    left: parseFloat($prev.css("left")) + $prev.outerWidth()
-                });
-
-                var id = counter++;
-
-                $this.data("id", id);
+                $this.data(DATA.transitionId + "." + _this.id, transitionId);
 
                 var fakeTransitionEnd,
 
                     onTransitionend = function (event) {
 
-                        if (event && event.originalEvent.target !== $clone[0] && event.originalEvent.propertyName !== "opacity") {
+                        if (event && event.originalEvent.target !== $this[0] && (event.originalEvent.propertyName !== "opacity"/* || event.originalEvent.elapsedTime !== 1*/)) {
 
                             return;
                         }
 
                         clearTimeout(fakeTransitionEnd);
 
-                        $clone.remove();
+                        if ($this.data(DATA.transitionId + "." + _this.id) === transitionId) {
 
-                        if ($this.data("id") === id) {
+                            $this.css({
+                                left: parseFloat($this.attr("data-left"))
+                            });
+
+                            $this.data("end", null);
+                            $this.data("to", null);
 
                             $this.removeClass(CLASS.hide);
-                            $this.removeClass("left");
+                            $this.removeClass(CLASS.toEnd);
                         }
 
-                        $clone.off(TRANSITIONEND);
+                        $this.off(TRANSITIONEND);
                     };
+
+                $this.data("end", onTransitionend);
 
                 if (!parseFloat(opacity)) {
 
@@ -448,16 +570,155 @@
 
                     fakeTransitionEnd = setTimeout(onTransitionend, 1050);
 
-                    $clone.on(TRANSITIONEND, onTransitionend);
+                    $this.data("to", fakeTransitionEnd);
 
-                    $clone.css("transition", "");
-                    $clone.addClass(CLASS.hide);
-                    $clone.css("opacity", "");
+                    $this.on(TRANSITIONEND, onTransitionend);
+
+                    $this.css("transition", "");
+                    $this.addClass(CLASS.hide);
+                    $this.css("opacity", "");
+                }
+
+                if ($this.hasClass(CLASS.uncurrent)) {
+
+                    $this.removeClass(CLASS.uncurrent);
+                    $this.removeClass(CLASS.current);
                 }
             }
         });
+
+        this._shouldCancelRAF && this.$leftItemsOver.each(function () {
+
+            var $this = $(this);
+
+            if ($this.hasClass(CLASS.toEnd)) return;
+
+            $this.off(TRANSITIONEND);
+
+            $this.data("end", null);
+            clearTimeout($this.data("to"));
+            $this.data("to", null);
+
+            $this.removeClass(CLASS.hide);
+            $this.removeClass(CLASS.toStart);
+
+            $this.attr("data-left", parseFloat($this.css("left")));
+        });
     };
 
+//    Infinitum.prototype._moveLeftItemsOverToTheEnd = function (animationDoneAndCurrentNotFirst) {
+//
+//        var _this = this,
+//
+//            addedWidth = 0;
+//
+//        this.$leftItemsOver.each(function () {
+//
+//            var $this = $(this),
+//
+//                width = $this.outerWidth();
+//
+//            if (!_this.options.clearLeft && _this.endItemPos + addedWidth >= _this._selfRect.right/* + (width / 2)*/) {
+//
+//                if ($this.hasClass(CLASS.uncurrent)) {
+//
+//                    $this.removeClass(CLASS.uncurrent);
+//                    $this.removeClass(CLASS.current);
+//                }
+//
+//                return;
+//            }
+//
+//            if (animationDoneAndCurrentNotFirst && $this.hasClass(CLASS.current)) {
+//
+//                return;
+//            }
+//
+//            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toStart) || animationDoneAndCurrentNotFirst) {
+//
+//                var $prev = $this.prevAll(CLASS.selector("clone", true)).first();
+//
+//                if (!$prev.length) {
+//
+//                    $prev = _this.$items.last();
+//                }
+//
+//                addedWidth += width;
+//
+//                var opacity = $this.css("opacity");
+//
+//                $this.removeClass(CLASS.hide);
+//
+//                var $clone = $this.clone();
+//
+//                $clone.css(TRANSITION_PROP, "none");
+//                $clone.css("opacity", opacity);
+//
+//                $clone.addClass(CLASS.clone);
+//
+//                $this.addClass(CLASS.hide);
+//                $this.addClass(CLASS.toEnd);
+//                $this.removeClass(CLASS.toStart);
+//
+//                $this.after($clone);
+//
+//                $clone.after($this);
+//
+//                $this.css({
+//                    left: parseFloat($prev.css("left")) + $prev.outerWidth()
+//                });
+//
+//                var transitionId = transitionIdCounter++;
+//
+//                $this.data(DATA.transitionId + "." + _this.id, transitionId);
+//
+//                var fakeTransitionEnd,
+//
+//                    onTransitionend = function (event) {
+//
+//                        if (event && event.originalEvent.target !== $clone[0] && event.originalEvent.propertyName !== "opacity") {
+//
+//                            return;
+//                        }
+//
+//                        clearTimeout(fakeTransitionEnd);
+//
+//                        $clone.remove();
+//
+//                        if ($this.data(DATA.transitionId + "." + _this.id) === transitionId) {
+//
+//                            $this.removeClass(CLASS.hide);
+//                            $this.removeClass(CLASS.toEnd);
+//                        }
+//
+//                        $clone.off(TRANSITIONEND);
+//                    };
+//
+//                if (!parseFloat(opacity)) {
+//
+//                    onTransitionend();
+//
+//                } else {
+//
+//                    fakeTransitionEnd = setTimeout(onTransitionend, 1050);
+//
+//                    $clone.on(TRANSITIONEND, onTransitionend);
+//
+//                    $clone.css(TRANSITION_PROP, "");
+//                    $clone.addClass(CLASS.hide);
+//                    $clone.css("opacity", "");
+//                }
+//
+//                if ($this.hasClass(CLASS.uncurrent)) {
+//
+//                    $this.removeClass(CLASS.uncurrent);
+//                    $this.removeClass(CLASS.current);
+//                    $clone.removeClass(CLASS.current);
+//                }
+//            }
+//        });
+//    };
+//
     Infinitum.prototype._moveRightItemsOverToTheStart = function () {
 
         var _this = this,
@@ -466,14 +727,21 @@
 
         this.$rightItemsOver.each(function () {
 
-            var $this = $(this);
+            var $this = $(this),
 
-            if (_this.startItemPos - addedWidth <= _this._selfRect.left) {
+                width = Math.round($this.outerWidth());
+
+            if (_this.startItemPosWll - addedWidth <= _this._selfRect.left/* + (width / 2)*/) {
 
                 return;
             }
 
-            if (!$this.hasClass(CLASS.hide) || $this.hasClass("left")) {
+            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toEnd)) {
+
+                $this.off(TRANSITIONEND);
+
+//                $this.data("end") && $this.data("end")();
+                $this.data("to") && clearTimeout($this.data("to"));
 
                 var $next = $this.nextAll(CLASS.selector("clone", true)).first();
 
@@ -482,56 +750,50 @@
                     $next = _this.$items.first();
                 }
 
-                addedWidth += $this.outerWidth();
+                addedWidth += width;
 
                 var opacity = $this.css("opacity");
 
+//                $this.css("transition", "none");
+//                $this.css("opacity", opacity);
+                $this.addClass(CLASS.toStart);
+                $this.removeClass(CLASS.toEnd);
                 $this.removeClass(CLASS.hide);
 
-                var $clone = $this.clone();
+                $this.attr("data-left", parseFloat($next.attr("data-left")) - Math.round($this.outerWidth()));
 
-                $clone.css("transition", "none");
-                $clone.css("opacity", opacity);
+                var transitionId = transitionIdCounter++;
 
-                $clone.addClass(CLASS.clone);
-
-                $this.addClass(CLASS.hide);
-                $this.addClass("right");
-                $this.removeClass("left");
-
-                $this.before($clone);
-
-                $clone.before($this);
-
-                $this.css({
-                    left: parseFloat($next.css("left")) - $this.outerWidth()
-                });
-
-                var id = counter++;
-
-                $this.data("id", id);
+                $this.data(DATA.transitionId + "." + _this.id, transitionId);
 
                 var fakeTransitionEnd,
 
                     onTransitionend = function (event) {
 
-                        if (event && event.originalEvent.target !== $clone[0] && event.originalEvent.propertyName !== "opacity") {
+                        if (event && event.originalEvent.target !== $this[0] && (event.originalEvent.propertyName !== "opacity"/* || event.originalEvent.elapsedTime !== 1*/)) {
 
                             return;
                         }
 
                         clearTimeout(fakeTransitionEnd);
 
-                        $clone.remove();
+//                        if ($this.data(DATA.transitionId + "." + _this.id) === transitionId) {
 
-                        if ($this.data("id") === id) {
+                            $this.css({
+                                left: parseFloat($this.attr("data-left"))
+                            });
+
+                            $this.data("end", null);
+                            $this.data("to", null);
 
                             $this.removeClass(CLASS.hide);
-                            $this.removeClass("right");
-                        }
+                            $this.removeClass(CLASS.toStart);
+//                        }
 
-                        $clone.off(TRANSITIONEND);
+                        $this.off(TRANSITIONEND);
                     };
+
+                $this.data("end", onTransitionend);
 
                 if (!parseFloat(opacity)) {
 
@@ -541,27 +803,157 @@
 
                     fakeTransitionEnd = setTimeout(onTransitionend, 1050);
 
-                    $clone.on(TRANSITIONEND, onTransitionend);
+                    $this.data("to", fakeTransitionEnd);
 
-                    $clone.css("transition", "");
-                    $clone.addClass(CLASS.hide);
-                    $clone.css("opacity", "");
+                    $this.on(TRANSITIONEND, onTransitionend);
+
+                    $this.css("transition", "");
+                    $this.addClass(CLASS.hide);
+                    $this.css("opacity", "");
+                }
+
+                if ($this.hasClass(CLASS.uncurrent)) {
+
+                    $this.removeClass(CLASS.uncurrent);
+                    $this.removeClass(CLASS.current);
                 }
             }
         });
 
+
+        this._shouldCancelRAF && this.$rightItemsOver.each(function () {
+
+            var $this = $(this);
+
+            if ($this.hasClass(CLASS.toStart)) return;
+
+            clearTimeout($this.data("to"));
+            $this.off(TRANSITIONEND);
+
+            $this.data("end", null);
+            $this.data("to", null);
+
+            $this.attr("data-left", parseFloat($this.css("left")));
+
+            $this.removeClass(CLASS.hide);
+            $this.removeClass(CLASS.toEnd);
+        });
+
     };
+//
+//    Infinitum.prototype._moveRightItemsOverToTheStart = function () {
+//
+//        var _this = this,
+//
+//            addedWidth = 0;
+//
+//        this.$rightItemsOver.each(function () {
+//
+//            var $this = $(this),
+//
+//                width = $this.outerWidth();
+//
+//            if (_this.startItemPos - addedWidth <= _this._selfRect.left/* + (width / 2)*/) {
+//
+//                return;
+//            }
+//
+//            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toEnd)) {
+//
+//                var $next = $this.nextAll(CLASS.selector("clone", true)).first();
+//
+//                if (!$next.length) {
+//
+//                    $next = _this.$items.first();
+//                }
+//
+//                addedWidth += width;
+//
+//                var opacity = $this.css("opacity");
+//
+//                $this.removeClass(CLASS.hide);
+//
+//                var $clone = $this.clone();
+//
+//                $clone.css(TRANSITION_PROP, "none");
+//                $clone.css("opacity", opacity);
+//
+//                $clone.addClass(CLASS.clone);
+//
+//                $this.addClass(CLASS.hide);
+//                $this.addClass(CLASS.toStart);
+//                $this.removeClass(CLASS.toEnd);
+//
+//                $this.before($clone);
+//
+//                $clone.before($this);
+//
+//                $this.css({
+//                    left: parseFloat($next.css("left")) - $this.outerWidth()
+//                });
+//
+//                var transitionid = transitionIdCounter++;
+//
+//                $this.data(DATA.transitionId + "." + _this.id, transitionid);
+//
+//                var fakeTransitionEnd,
+//
+//                    onTransitionend = function (event) {
+//
+//                        if (event && event.originalEvent.target !== $clone[0] && event.originalEvent.propertyName !== "opacity") {
+//
+//                            return;
+//                        }
+//
+//                        clearTimeout(fakeTransitionEnd);
+//
+//                        $clone.remove();
+//
+//                        if ($this.data(DATA.transitionId + "." + _this.id) === transitionid) {
+//
+//                            $this.removeClass(CLASS.hide);
+//                            $this.removeClass(CLASS.toStart);
+//                        }
+//
+//                        $clone.off(TRANSITIONEND);
+//                    };
+//
+//                if (!parseFloat(opacity)) {
+//
+//                    onTransitionend();
+//
+//                } else {
+//
+//                    fakeTransitionEnd = setTimeout(onTransitionend, 1050);
+//
+//                    $clone.on(TRANSITIONEND, onTransitionend);
+//
+//                    $clone.css(TRANSITION_PROP, "");
+//                    $clone.addClass(CLASS.hide);
+//                    $clone.css("opacity", "");
+//                }
+//
+//                if ($this.hasClass(CLASS.uncurrent)) {
+//
+//                    $this.removeClass(CLASS.uncurrent);
+//                    $this.removeClass(CLASS.current);
+//                    $clone.removeClass(CLASS.current);
+//                }
+//            }
+//        });
+//
+//    };
 
     Infinitum.prototype._sortItems = function () {
 
-        this.startItemPos = null;
-        this.endItemPos = null;
+        this.startItemPosWll = null;
+        this.endItemPosWill = null;
 
         var leftItemsOver = [],
             rightItemsOver = [],
-            startItem = null,
-            endItem = null,
-            startItemRect = null;
+            willStartItem = null,
+            willEndItem = null,
+            willStartItemRect = null;
 
         this.$insideItems = $([]);
 
@@ -569,27 +961,32 @@
 
             var rect = item.getBoundingClientRect();
 
-            if (this.startItemPos === null || this.startItemPos > rect.left) {
+            var attrLeft = parseFloat($t(item).attr("data-left")),
+                cssLeft = parseFloat($t(item).css("left"));
 
-                this.startItemPos = rect.left;
+            if (this.startItemPosWll === null || this.startItemPosWll > rect.left + (attrLeft - cssLeft)) {
 
-                startItem = item;
+                this.startItemPosWll = rect.left + (attrLeft - cssLeft);
 
-                startItemRect = rect;
+                willStartItem = item;
+
+                willStartItemRect = {
+                    left: rect.left + (attrLeft - cssLeft)
+                };
             }
 
-            if (this.endItemPos === null || this.endItemPos < rect.right) {
+            if (this.endItemPosWill === null || this.endItemPosWill < rect.right + (attrLeft - cssLeft)) {
 
-                this.endItemPos = rect.right;
+                this.endItemPosWill = rect.right + (attrLeft - cssLeft);
 
-                endItem = item;
+                willEndItem = item;
             }
 
-            if (rect.left < this._selfRect.left) {
+            if (rect.left /*+ (attrLeft - cssLeft)*/ + (rect.width / 2) < this._selfRect.left) {
 
                 leftItemsOver.push(item);
 
-            } else if (rect.right > this._selfRect.right) {
+            } else if (rect.right/* + (attrLeft - cssLeft)*/ > this._selfRect.right) {
 
                 rightItemsOver.push(item);
 
@@ -600,22 +997,36 @@
 
         }.bind(this));
 
-        this.$startItem = $(startItem);
-        this.$endItem = $(endItem);
+        this.$willStartItem = this.$willStartItem && this.$willStartItem[0] === willStartItem ? this.$willStartItem : $(willStartItem);
+        this.$willEndItem = this.$willEndItem && this.$willEndItem[0] === willEndItem ? this.$willEndItem : $(willEndItem);
 
-        this.$leftItemsOver = $(leftItemsOver.sort(function (a, b) {
+        if (leftItemsOver.length > 1) {
 
-            return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
-        }));
+            this.$leftItemsOver = $(leftItemsOver.sort(function (a, b) {
 
-        this.$rightItemsOver = $(rightItemsOver.sort(function (a, b) {
+                return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+            }));
 
-            return b.getBoundingClientRect().left - a.getBoundingClientRect().left;
-        }));
+        } else {
 
-        if (!this.$leftItemsOver.length && !this.$rightItemsOver.length && startItemRect.left > this._selfRect.left) {
+            this.$leftItemsOver = $(leftItemsOver);
+        }
 
-            this.$rightItemsOver = this.$endItem;
+        if (rightItemsOver.length > 1) {
+
+            this.$rightItemsOver = $(rightItemsOver.sort(function (a, b) {
+
+                return b.getBoundingClientRect().left - a.getBoundingClientRect().left;
+            }));
+
+        } else {
+
+            this.$rightItemsOver = $(rightItemsOver);
+        }
+
+        if (!this.$leftItemsOver.length && !this.$rightItemsOver.length && willStartItemRect.left > this._selfRect.left) {
+
+            this.$rightItemsOver = this.$willEndItem;
         }
     };
 
@@ -636,14 +1047,14 @@
 
         }, 0) / this._speed.length;
 
-        if (avgSpeed < 11) {
+        if (avgSpeed < 12) {
 
             this.$track
                 .removeClass(CLASS.speed2)
                 .removeClass(CLASS.speed3)
                 .addClass(CLASS.speed1);
 
-        } else if (avgSpeed < 22) {
+        } else if (avgSpeed < 24) {
 
             this.$track
                 .removeClass(CLASS.speed1)
@@ -657,6 +1068,71 @@
                 .removeClass(CLASS.speed2)
                 .addClass(CLASS.speed3);
         }
+    };
+
+    Infinitum.prototype._setCurrent = function ($item, defer) {
+
+        if (!$item || !$item[0]) {
+
+            return;
+        }
+
+        if ($item[0] !== this.$currentItem[0]) {
+
+            var changeEvent = $.Event({
+                type: Infinitum.EVENT.change,
+                target: $item[0],
+                fromElement: this.$currentItem[0],
+                toElement: $item[0]
+            });
+
+            this.$self.trigger(changeEvent);
+
+            if (changeEvent.isDefaultPrevented()) {
+
+                return;
+            }
+
+            if (defer) {
+
+                this.$currentItem.addClass(CLASS.uncurrent);
+
+            } else {
+
+                this.$currentItem.removeClass(CLASS.current);
+            }
+
+            this.$currentItem = $item;
+
+            $item.addClass(CLASS.current);
+        }
+
+        var attrLeft = parseFloat($item.attr("data-left")),
+            cssLeft = parseFloat($item.css("left"));
+
+        var itemPos = $item[0].getBoundingClientRect().left + (attrLeft - cssLeft) - this._selfRect.left;
+
+        if (!itemPos) {
+
+            return;
+        }
+
+        this._moveTrack(-itemPos, true);
+    };
+
+    Infinitum.prototype.setCurrent = function ($item) {
+
+        this._setCurrent($item, true);
+    };
+
+    Infinitum.prototype.on = function (event, handler) {
+
+        this.$self.on(event, handler);
+    };
+
+    Infinitum.prototype.off = function (event, handler) {
+
+        this.$self.on(event, handler);
     };
 
 }(jQuery));
