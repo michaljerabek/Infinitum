@@ -160,9 +160,9 @@
         clearLeft: true,
 
         live: true,
-        animateLive: false,
+        animateLive: true,
 
-        refreshItems: false
+        refreshItems: true
     };
 
 
@@ -202,7 +202,8 @@
         tap: "tap",
         key: "key",
         scroll: "scroll",
-        change: "change"
+        change: "change",
+        willChange: "willchange"
     };
 
     Infinitum.DIR = {
@@ -211,6 +212,10 @@
     };
 
     Infinitum.FAKE_TRANSITION_TIMEOUT = 700;
+
+    Infinitum.CAPTURE_WHEEL_TIMEOUT = 300;
+    Infinitum.KEY_THROTTLE = 75;
+    Infinitum.WHEEL_THROTTLE = 30;
 
     Infinitum.prototype.init = function (options) {
 
@@ -357,22 +362,14 @@
 
             if ($item.length) {
 
-                var tapEvent = $.extend({}, $.Event(), $.Event({
-                    type: Infinitum.EVENT.tap,
-                    target: $item[0],
-                    fromElement: this.$currentItem[0],
-                    toElement: $item[0],
-                    originalEvent: event.originalEvent
-                }));
-
-                this.$self.trigger(tapEvent);
+                var tapEvent = this._triggerChangeTypeEvent(Infinitum.EVENT.tap, event, $item);
 
                 if (tapEvent.isDefaultPrevented()) {
 
                     return;
                 }
 
-                this._setCurrent($item, false, true);
+                this._setCurrent($item, false, true, true);
             }
 
             return !$item.length;
@@ -419,6 +416,42 @@
         return $(closestLeftItem);
     };
 
+    Infinitum.prototype._onWheel = function (event) {
+
+        this._lastDir = (event.originalEvent.detail || event.originalEvent.deltaY || event.originalEvent.deltaX) > 0 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
+
+        var $item = this._lastDir === Infinitum.DIR.LEFT ? this.findNext() : this.findPrev();
+
+        var scrollEvent = this._triggerChangeTypeEvent(Infinitum.EVENT.scroll, event, $item);
+
+        if (scrollEvent.isDefaultPrevented()) {
+
+            return;
+        }
+
+        this._setCurrent($item);
+
+        event.preventDefault();
+    };
+
+    Infinitum.prototype._onKey = function (event) {
+
+        this._lastDir = [37, 38].indexOf(event.which) === -1 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
+
+        var $item = this._lastDir === Infinitum.DIR.LEFT ? this.findNext() : this.findPrev();
+
+        var keyEvent = this._triggerChangeTypeEvent(Infinitum.EVENT.key, event, $item);
+
+        if (keyEvent.isDefaultPrevented()) {
+
+            return;
+        }
+
+        this._setCurrent($item);
+
+        event.preventDefault();
+    };
+
     Infinitum.prototype._initEvents = function () {
 
         this.$self.on("mousedown" + this.NS + " touchstart" + this.NS, this._onPointerStart.bind(this));
@@ -440,39 +473,16 @@
 
         this.$self.on("keydown" + this.NS, function (event) {
 
-            if ([37, 38, 39, 40].indexOf(event.which) === -1 || keydownThrottle) {
+            if (keydownThrottle || [37, 38, 39, 40].indexOf(event.which) === -1) {
 
                 return;
             }
 
             keydownThrottle = true;
 
-            setTimeout(function() {
+            setTimeout(function() { keydownThrottle = false; }, Infinitum.KEY_THROTTLE);
 
-                keydownThrottle = false;
-
-            }, 150);
-
-            var $item = [37, 38].indexOf(event.which) === -1 ? this.findNext() : this.findPrev();
-
-            var keyEvent = $.extend({}, $.Event(), $.Event({
-                type: Infinitum.EVENT.key,
-                target: $item[0],
-                fromElement: this.$currentItem[0],
-                toElement: $item[0],
-                originalEvent: event.originalEvent
-            }));
-
-            this.$self.trigger(keyEvent);
-
-            if (keyEvent.isDefaultPrevented()) {
-
-                return;
-            }
-
-            this._setCurrent($item, false, true);
-
-            event.preventDefault();
+            this._onKey(event);
 
         }.bind(this));
 
@@ -490,11 +500,7 @@
 
             clearTimeout(scrollDebounce);
 
-            scrollDebounce = setTimeout(function() {
-
-                allowWheel = true;
-
-            }, 300);
+            scrollDebounce = setTimeout(function() { allowWheel = true; }, Infinitum.CAPTURE_WHEEL_TIMEOUT);
         });
 
         var wheelThrottle = null;
@@ -515,32 +521,9 @@
 
             wheelThrottle = true;
 
-            setTimeout(function() {
+            setTimeout(function() { wheelThrottle = false; }, Infinitum.WHEEL_THROTTLE);
 
-                wheelThrottle = false;
-
-            }, 150);
-
-            var $item = (event.originalEvent.detail || event.originalEvent.deltaY || event.originalEvent.deltaX) > 0 ? this.findNext() : this.findPrev();
-
-            var scrollEvent = $.extend({}, $.Event(), {
-                type: Infinitum.EVENT.scroll,
-                target: $item[0],
-                fromElement: this.$currentItem[0],
-                toElement: $item[0],
-                originalEvent: event.originalEvent
-            });
-
-            this.$self.trigger(scrollEvent);
-
-            if (scrollEvent.isDefaultPrevented()) {
-
-                return;
-            }
-
-            this._setCurrent($item, false, true);
-
-            event.preventDefault();
+            this._onWheel(event);
 
         }.bind(this));
 
@@ -553,6 +536,21 @@
             resizeDebounce = setTimeout(this.softRefresh.bind(this), 50);
 
         }.bind(this));
+    };
+
+    Infinitum.prototype._triggerChangeTypeEvent = function (type, event, $toItem, moreData) {
+
+        var eventObj = $.extend({}, $.Event(), $.Event({
+            type: type,
+            target: $toItem[0],
+            fromElement: this.$currentItem[0],
+            toElement: $toItem[0],
+            originalEvent: event ? event.originalEvent : null
+        }, moreData || null));
+
+        this.$self.trigger(eventObj);
+
+        return eventObj;
     };
 
     Infinitum.prototype.findNext = function ($from) {
@@ -649,7 +647,7 @@
 
         this._sortItems();
 
-        this._setCurrent(this._findCurrentItem());
+        this._setCurrent(this._findCurrentItem(), true);
     };
 
     Infinitum.prototype.softRefresh = function (items) {
@@ -1091,33 +1089,40 @@
 
         if ($item[0] !== this.$currentItem[0]) {
 
-            var changeEvent = $.extend({}, $.Event(), {
-                type: Infinitum.EVENT.change,
-                target: $item[0],
-                fromElement: this.$currentItem[0],
-                toElement: $item[0]
-            });
-
-            this.$self.trigger(changeEvent);
-
-            if (changeEvent.isDefaultPrevented()) {
-
-                if (!noTrackMove) {
-
-                    this._moveToCurrent();
-                }
-
-                return;
-            }
-
             if (!autoOnLive || !this.options.live || !this.options.animateLive) {
 
+                var changeEvent = this._triggerChangeTypeEvent(Infinitum.EVENT.change, null, $item);
+
+                if (changeEvent.isDefaultPrevented()) {
+
+                    if (!noTrackMove) {
+
+                        this._moveToItem(this.$currentItem);
+                    }
+
+                    return;
+                }
+
                 this.$currentItem.removeClass(CLASS.current);
+
+                this.$currentItem = $item;
+
+                $item.addClass(CLASS.current);
+
+            } else {
+
+                var willChangeEvent = this._triggerChangeTypeEvent(Infinitum.EVENT.willChange, null, $item);
+
+                if (willChangeEvent.isDefaultPrevented()) {
+
+                    if (!noTrackMove) {
+
+                        this._moveToItem(this.$currentItem);
+                    }
+
+                    return;
+                }
             }
-
-            this.$currentItem = $item;
-
-            $item.addClass(CLASS.current);
         }
 
         if (noTrackMove) {
@@ -1125,15 +1130,15 @@
             return;
         }
 
-        this._moveToCurrent();
+        this._moveToItem($item);
     };
 
-    Infinitum.prototype._moveToCurrent = function () {
+    Infinitum.prototype._moveToItem = function ($item) {
 
-        var attrLeft = parseFloat(this.$currentItem.data(DATA.willLeft + this.NS)),
-            cssLeft = parseFloat(this.$currentItem.css("left")),
+        var attrLeft = parseFloat($item.data(DATA.willLeft + this.NS)),
+            cssLeft = parseFloat($item.css("left")),
 
-            itemPos = this.$currentItem[0].getBoundingClientRect().left + (attrLeft - cssLeft) - this._selfRect.left;
+            itemPos = $item[0].getBoundingClientRect().left + (attrLeft - cssLeft) - this._selfRect.left;
 
         if (!itemPos) {
 
@@ -1155,7 +1160,7 @@
 
     Infinitum.prototype.off = function (event, handler) {
 
-        this.$self.on(event, handler);
+        this.$self.off(event, handler);
     };
 
 }(jQuery));
