@@ -160,7 +160,7 @@
         clearLeft: true,
 
         live: true,
-        animateLive: true,
+        animateLive: false,
 
         refreshItems: true
     };
@@ -215,7 +215,7 @@
 
     Infinitum.CAPTURE_WHEEL_TIMEOUT = 300;
     Infinitum.KEY_THROTTLE = 75;
-    Infinitum.WHEEL_THROTTLE = 30;
+    Infinitum.WHEEL_THROTTLE = 40;
 
     Infinitum.prototype.init = function (options) {
 
@@ -649,6 +649,8 @@
 
             this._moveToItem($item);
 
+            this.$currentItem = $item;
+
         } else {
 
             this._setCurrent($item);
@@ -675,6 +677,8 @@
         if (this.options.animateLive) {
 
             this._moveToItem($item);
+
+            this.$currentItem = $item;
 
         } else {
 
