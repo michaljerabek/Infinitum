@@ -29,6 +29,14 @@
         pointer-events: none;
     }
 
+    .infinitum__track--static .infinitum__item {
+        transition-duration: 0.01s;
+    }
+
+    .infinitum__track--static .infinitum__item--hide {
+        transition-duration: 0.01s;
+    }
+
     .infinitum__track--slow .infinitum__item {
         transition-duration: 0.65s;
     }

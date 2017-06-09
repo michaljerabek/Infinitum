@@ -136,6 +136,7 @@
         toEnd: "infinitum__item--to-end",
         toStart: "infinitum__item--to-start",
 
+        speed0: "infinitum__track--static",
         speed1: "infinitum__track--slow",
         speed2: "infinitum__track--medium",
         speed3: "infinitum__track--fast",
@@ -182,7 +183,7 @@
 
         this._lastTrackX = 0;
 
-        this.startItemPosWll = 0;
+        this.startItemPosWill = 0;
         this.endItemPosWill = 0;
 
         this.$currentItem = $();
@@ -753,7 +754,18 @@
         }
     };
 
-    Infinitum.prototype._setSpeed = function (move) {
+    Infinitum.prototype._setFadeSpeed = function (move, noFade) {
+
+        if (noFade) {
+
+            this.$track
+                .removeClass(CLASS.speed1)
+                .removeClass(CLASS.speed2)
+                .removeClass(CLASS.speed3)
+                .addClass(CLASS.speed0);
+
+            return;
+        }
 
         this._speed = this._speed.slice(0, 4);
 
@@ -768,6 +780,7 @@
         if (avgSpeed < 12) {
 
             this.$track
+                .removeClass(CLASS.speed0)
                 .removeClass(CLASS.speed2)
                 .removeClass(CLASS.speed3)
                 .addClass(CLASS.speed1);
@@ -775,6 +788,7 @@
         } else if (avgSpeed < 24) {
 
             this.$track
+                .removeClass(CLASS.speed0)
                 .removeClass(CLASS.speed1)
                 .removeClass(CLASS.speed3)
                 .addClass(CLASS.speed2);
@@ -782,6 +796,7 @@
         } else {
 
             this.$track
+                .removeClass(CLASS.speed0)
                 .removeClass(CLASS.speed1)
                 .removeClass(CLASS.speed2)
                 .addClass(CLASS.speed3);
@@ -790,7 +805,7 @@
 
     Infinitum.prototype._move = function (x, animation, fakeMove) {
 
-        this._setSpeed(x);
+        this._setFadeSpeed(x, fakeMove);
 
         if (!animation) {
 
@@ -823,7 +838,7 @@
 
     Infinitum.prototype._sortItems = function () {
 
-        this.startItemPosWll = null;
+        this.startItemPosWill = null;
         this.endItemPosWill = null;
 
         var leftItemsOver = [],
@@ -845,9 +860,9 @@
 
                 diff = attrLeft - cssLeft;
 
-            if (this.startItemPosWll === null || this.startItemPosWll > rect.left + diff) {
+            if (this.startItemPosWill === null || this.startItemPosWill > rect.left + diff) {
 
-                this.startItemPosWll = rect.left + diff;
+                this.startItemPosWill = rect.left + diff;
 
                 willStartItem = item;
 
@@ -919,7 +934,7 @@
 
         this.$leftItemsOver.each(function () {
 
-            var $this = $(this),
+            var $this = $t(this),
 
                 width = Math.round($this.outerWidth());
 
@@ -935,90 +950,16 @@
 
             if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toStart) || animationDoneAndCurrentNotFirst) {
 
-                $this.off(TRANSITIONEND + _this.NS);
-
-                var lastFakeTransition = $this.data(DATA.fakeTransitionTimeout + _this.NS);
-
-                if (lastFakeTransition) {
-
-                    clearTimeout(lastFakeTransition);
-                }
-
-                var $prev = _this.findPrev($this);
-
                 addedWidth += width;
 
-                var opacity = $this.css("opacity");
-
-                $this.addClass(CLASS.toEnd)
-                    .removeClass(CLASS.toStart)
-                    .removeClass(CLASS.hide);
-
-                $this.data(DATA.willLeft + _this.NS, parseFloat($prev.data(DATA.willLeft + _this.NS)) + Math.round($prev.outerWidth()));
-
-                var fakeTransitionEnd,
-
-                    onTransitionend = function (event) {
-
-                        if (event && event.originalEvent.target !== $this[0] && event.originalEvent.propertyName !== "opacity") {
-
-                            return;
-                        }
-
-                        clearTimeout(fakeTransitionEnd);
-
-                        $this.css({
-                            left: parseFloat($this.data(DATA.willLeft + _this.NS))
-                        });
-
-                        $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
-
-                        $this.removeClass(CLASS.hide)
-                            .removeClass(CLASS.toEnd);
-
-                        $this.off(TRANSITIONEND + _this.NS);
-                    };
-
-                if (!parseFloat(opacity)) {
-
-                    onTransitionend();
-
-                } else {
-
-                    fakeTransitionEnd = setTimeout(onTransitionend, Infinitum.FAKE_TRANSITION_TIMEOUT);
-
-                    $this.data(DATA.fakeTransitionTimeout + _this.NS, fakeTransitionEnd);
-
-                    $this.on(TRANSITIONEND + _this.NS, onTransitionend);
-
-                    $this.addClass(CLASS.hide);
-                }
+                _this._breakItem($(this), "end");
             }
         });
 
         if (this._shouldCancelRAF) {
 
-            this.$leftItemsOver.each(function () {
-
-                var $this = $t(this);
-
-                if ($this.hasClass(CLASS.toEnd)) {
-
-                    return;
-                }
-
-                $this.off(TRANSITIONEND + _this.NS);
-
-                clearTimeout($this.data(DATA.fakeTransitionTimeout + _this.NS));
-                $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
-
-                $this.removeClass(CLASS.hide)
-                    .removeClass(CLASS.toStart);
-
-                $this.data(DATA.willLeft + _this.NS, parseFloat($this.css("left")));
-            });
+            this._clearHideStates("start");
         }
-
     };
 
     Infinitum.prototype._moveRightItemsOverToTheStart = function () {
@@ -1029,101 +970,115 @@
 
         this.$rightItemsOver.each(function () {
 
-            var $this = $(this),
+            var $this = $t(this),
 
                 width = Math.round($this.outerWidth());
 
-            if (_this.startItemPosWll - addedWidth <= _this._selfRect.left/* + (width / 2)*/) {
+            if (_this.startItemPosWill - addedWidth <= _this._selfRect.left/* + (width / 2)*/) {
 
                 return;
             }
 
             if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toEnd)) {
 
-                $this.off(TRANSITIONEND + _this.NS);
-
-                var lastFakeTransition = $this.data(DATA.fakeTransitionTimeout + _this.NS);
-
-                if (lastFakeTransition) {
-
-                    clearTimeout(lastFakeTransition);
-                }
-
-                var $next = _this.findNext($this);
-
                 addedWidth += width;
 
-                var opacity = $this.css("opacity");
-
-                $this.addClass(CLASS.toStart)
-                    .removeClass(CLASS.toEnd)
-                    .removeClass(CLASS.hide);
-
-                $this.data(DATA.willLeft + _this.NS, parseFloat($next.data(DATA.willLeft + _this.NS)) - width);
-
-                var fakeTransitionEnd,
-
-                    onTransitionend = function (event) {
-
-                        if (event && event.originalEvent.target !== $this[0] && event.originalEvent.propertyName !== "opacity") {
-
-                            return;
-                        }
-
-                        clearTimeout(fakeTransitionEnd);
-
-                        $this.css({
-                            left: parseFloat($this.data(DATA.willLeft + _this.NS))
-                        });
-
-                        $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
-
-                        $this.removeClass(CLASS.hide)
-                            .removeClass(CLASS.toStart);
-
-                        $this.off(TRANSITIONEND + _this.NS);
-                    };
-
-                if (!parseFloat(opacity)) {
-
-                    onTransitionend();
-
-                } else {
-
-                    fakeTransitionEnd = setTimeout(onTransitionend, Infinitum.FAKE_TRANSITION_TIMEOUT);
-
-                    $this.data(DATA.fakeTransitionTimeout + _this.NS, fakeTransitionEnd);
-
-                    $this.on(TRANSITIONEND + _this.NS, onTransitionend);
-
-                    $this.addClass(CLASS.hide);
-                }
+                _this._breakItem($(this), "start");
             }
         });
 
 
         if (this._shouldCancelRAF) {
 
-            this.$rightItemsOver.each(function () {
+            this._clearHideStates("end");
+        }
+    };
 
-                var $this = $t(this);
+    Infinitum.prototype._breakItem = function ($item, toPosition) {
 
-                if ($this.hasClass(CLASS.toStart)) {
+        $item.off(TRANSITIONEND + this.NS);
+
+        var lastFakeTransition = $item.data(DATA.fakeTransitionTimeout + this.NS);
+
+        if (lastFakeTransition) {
+
+            clearTimeout(lastFakeTransition);
+        }
+
+        var $sibling = toPosition === "start" ? this.findNext($item) : this.findPrev($item),
+
+            width = toPosition === "start" ? Math.round($item.outerWidth()) : -Math.round($sibling.outerWidth());
+
+        var opacity = $item.css("opacity");
+
+        $item.addClass(toPosition === "start" ? CLASS.toStart : CLASS.toEnd)
+            .removeClass(toPosition === "start" ? CLASS.toEnd : CLASS.toStart)
+            .removeClass(CLASS.hide);
+
+        $item.data(DATA.willLeft + this.NS, parseFloat($sibling.data(DATA.willLeft + this.NS)) - width);
+
+        var fakeTransitionEnd,
+
+            onTransitionend = function (event) {
+
+                if (event && event.originalEvent.target !== $item[0] && event.originalEvent.propertyName !== "opacity") {
 
                     return;
                 }
 
-                $this.off(TRANSITIONEND + _this.NS);
+                clearTimeout(fakeTransitionEnd);
 
-                clearTimeout($this.data(DATA.fakeTransitionTimeout + _this.NS));
-                $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
+                $item.css({
+                    left: parseFloat($item.data(DATA.willLeft + this.NS))
+                });
 
-                $this.removeClass(CLASS.hide)
-                    .removeClass(CLASS.toEnd);
+                $item.data(DATA.fakeTransitionTimeout + this.NS, null);
 
-                $this.data(DATA.willLeft + _this.NS, parseFloat($this.css("left")));
-            });
+                $item.removeClass(CLASS.hide)
+                    .removeClass(toPosition === "start" ? CLASS.toStart : CLASS.toEnd);
+
+                $item.off(TRANSITIONEND + this.NS);
+            }.bind(this);
+
+        if (!parseFloat(opacity)) {
+
+            onTransitionend();
+
+        } else {
+
+            fakeTransitionEnd = setTimeout(onTransitionend, Infinitum.FAKE_TRANSITION_TIMEOUT);
+
+            $item.data(DATA.fakeTransitionTimeout + this.NS, fakeTransitionEnd);
+
+            $item.on(TRANSITIONEND + this.NS, onTransitionend);
+
+            $item.addClass(CLASS.hide);
         }
+    };
+
+    Infinitum.prototype._clearHideStates = function (position) {
+
+        var _this = this;
+
+        (position === "end" ? this.$rightItemsOver : this.$leftItemsOver).each(function () {
+
+            var $this = $t(this);
+
+            if (position === "end" ? $this.hasClass(CLASS.toStart) : $this.hasClass(CLASS.toEnd)) {
+
+                return;
+            }
+
+            $this.off(TRANSITIONEND + _this.NS);
+
+            clearTimeout($this.data(DATA.fakeTransitionTimeout + _this.NS));
+            $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
+
+            $this.removeClass(CLASS.hide)
+                .removeClass(position === "end" ? $this.hasClass(CLASS.toEnd) : $this.hasClass(CLASS.toStart));
+
+            $this.data(DATA.willLeft + _this.NS, parseFloat($this.css("left")));
+        });
     };
 
     Infinitum.prototype._animate = function () {
