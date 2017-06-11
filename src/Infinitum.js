@@ -179,7 +179,18 @@
          */
         itemSelector: null,
 
+        /* Infinitum.POSITION - Zarovnání aktivní položky
+         */
+        mode: POSITION.LEFT,
+
+
         wheelKeysTapSetCurrent: true, //???
+
+
+        /* Boolean - používat fade efekt
+         */
+        fade: false,
+
 
         /* Boolean - přesouvat položky z na konec
          */
@@ -190,16 +201,19 @@
         breakAll: false,
 
         /* Infinitum.POSITION - kdy přesunou položky na levé straně
+         * pokud je fade false, výchozí je Infinitum.POSITION.END
          */
         leftBreak: POSITION.CENTER,
 
         /* Infinitum.POSITION - kdy přesunou položky na pravé straně
+         * pokud je fade false, výchozí je Infinitum.POSITION.START
          */
-        rightBreak: POSITION.START,
+        rightBreak: POSITION.END,
 
         /* Boolean - přesouvat položky pouze pokud přesahují kraj widgetu
          */
         breakOnEdge: false,
+
 
         /* Boolean - při softRefresh (např. při resize) přepsat i pozice položek
          * Pokud se nikdy nemění velikost položek, to není nutné.
@@ -268,7 +282,18 @@
 
         options = options || this.options || {};
 
-        this.options = $.extend({}, DEFAULTS, options);
+        var _DEFAULTS = null;
+
+        if (options.fade === false) {
+
+            _DEFAULTS = $.extend({}, DEFAULTS);
+
+            _DEFAULTS.leftBreak = Infinitum.POSITION.END;
+
+            _DEFAULTS.rightBreak = Infinitum.POSITION.START;
+        }
+
+        this.options = $.extend({}, _DEFAULTS || DEFAULTS, options);
 
         this._prepareSelf();
 
@@ -1301,7 +1326,20 @@
 
         var $sibling = toPosition === "start" ? this.findNext($item) : this.findPrev($item),
 
-            width = toPosition === "start" ? Math.round($item.outerWidth()) : -Math.round($sibling.outerWidth());
+            width = toPosition === "start" ? Math.round($item.outerWidth()) : -Math.round($sibling.outerWidth()),
+
+            left = parseFloat($sibling.data(DATA.willLeft + this.NS)) - width;
+
+        if (!this.options.fade) {
+
+            $item.css({
+                left: left
+            });
+
+            $item.data(DATA.willLeft + this.NS, left);
+
+            return;
+        }
 
         var opacity = $item.css("opacity");
 
@@ -1310,7 +1348,7 @@
             .removeClass(CLASS.hide);
 
         //konečná hodnota (kam bude po zmizení položka přesunuta) - pro případy, kdy se potřebujeme tváři, jako by byla položka už na daném místě
-        $item.data(DATA.willLeft + this.NS, parseFloat($sibling.data(DATA.willLeft + this.NS)) - width);
+        $item.data(DATA.willLeft + this.NS, left);
 
         var fakeTransitionEnd,
 
@@ -1355,6 +1393,11 @@
      * Odstraňuje nastavení pro přesunutí položek, pokud se změní směr pohybu.
      */
     Infinitum.prototype._clearHideStates = function (position) {
+
+        if (!this.options.fade) {
+
+            return;
+        }
 
         var _this = this;
 
