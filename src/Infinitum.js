@@ -198,7 +198,6 @@
         this.startItemPosWill = 0;
         this.endItemPosWill = 0;
 
-        this.$currentItem = $();
         this.$willStartItem = null;
         this.$willEndItem = null;
         this.$leftItemsOver = null;
@@ -239,9 +238,9 @@
             return;
         }
 
-        this.options = options || this.options || {};
+        options = options || this.options || {};
 
-        this.options = $.extend({}, DEFAULTS, this.options);
+        this.options = $.extend({}, DEFAULTS, options);
 
         this._prepareSelf();
 
@@ -252,6 +251,67 @@
         this._initEvents();
 
         this.initialized = true;
+    };
+
+    Infinitum.prototype.destroy = function () {
+
+        if (!this.initialized) {
+
+            return;
+        }
+
+        this._shouldCancelRAF = true;
+        cancelAnimationFrame(this._animate);
+
+        this._destroyEvents();
+
+        this.$self.removeClass(CLASS.self);
+
+        this.$track.css(TRANSFORM_PROP, "")
+            .css(TRANSITION_PROP + "Duration", "")
+            .css("min-height", "")
+            .off(this.NS, "")
+            .removeClass(CLASS.track)
+            .removeClass(CLASS.moving)
+            .removeClass(CLASS.speed0)
+            .removeClass(CLASS.speed1)
+            .removeClass(CLASS.speed2)
+            .removeClass(CLASS.speed3)
+            .data(DATA.willTranslate + this.NS, undefined);
+
+        this.$items.each(function (i, item) {
+
+            var $this = $t(item);
+
+            clearTimeout($this.data(DATA.fakeTransitionTimeout + this.NS));
+
+            $this.data(DATA.fakeTransitionTimeout + this.NS, undefined)
+                .data(DATA.willLeft + this.NS, undefined);
+
+        }.bind(this));
+
+        this.$items.css({
+                position: "",
+                left: ""
+            })
+            .off(this.NS)
+            .removeClass(CLASS.item)
+            .removeClass(CLASS.current)
+            .removeClass(CLASS.possibleCurrent)
+            .removeClass(CLASS.toEnd)
+            .removeClass(CLASS.toStart)
+            .removeClass(CLASS.hide);
+
+        this.$self = this.$track = this.$item = this.$currentItem = this.$leftItemsOver = this.$rightItemsOver = this.$insideItems = this._$possibleCurrent = this.$willStartItem = this.$willEndItem = null;
+
+        this.initialized = false;
+    };
+
+    Infinitum.prototype.refresh = function (options, mergeOptions) {
+
+        this.destroy();
+
+        this.init(mergeOptions ? $.extend({}, this.options, options) : options);
     };
 
     Infinitum.prototype.softRefresh = function (items) {
@@ -369,6 +429,11 @@
     };
 
     Infinitum.prototype._prepareItems = function (preserveCurrent) {
+
+        if (!preserveCurrent) {
+
+            this.$currentItem = $();
+        }
 
         this.$items = this.options.itemSelector ? this.$track.find(this.options.itemSelector) : this.$track.children();
 
@@ -497,6 +562,13 @@
             }
 
         }.bind(this));
+    };
+
+    Infinitum.prototype._destroyEvents = function () {
+
+        this.$self.off(this.NS);
+
+        $win.on(this.NS);
     };
 
     Infinitum.prototype._onPointerStart = function (event) {
