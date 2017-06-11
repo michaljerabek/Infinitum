@@ -1,11 +1,16 @@
-.infinitum * {
-/*    transition-duration: 1s !important;*/
-}
-
 .infinitum__track {
     position: relative;
 
+    -webkit-transition: -webkit-transform 0.5s ease-out;
+    -moz-transition: -moz-transform 0.5s ease-out;
+    -o-transition: -o-transform 0.5s ease-out;
+    -webkit-transition: transform 0.5s ease-out;
+    -moz-transition: transform 0.5s ease-out;
+    -o-transition: transform 0.5s ease-out;
     transition: transform 0.5s ease-out;
+    -webkit-transition-timing-function: cubic-bezier(.35, .35, .35, 1);
+    -moz-transition-timing-function: cubic-bezier(.35, .35, .35, 1);
+    -o-transition-timing-function: cubic-bezier(.35, .35, .35, 1);
     transition-timing-function: cubic-bezier(.35, .35, .35, 1);
     will-change: transform;
 }
@@ -13,53 +18,85 @@
     .infinitum__item {
         opacity: 1;
 
+        -webkit-transition-property: opacity, color, background, filter;
+        -moz-transition-property: opacity, color, background, filter;
+        -o-transition-property: opacity, color, background, filter;
         transition-property: opacity, color, background, filter;
-        transition-timing-function: cubic-bezier(.35, .35, .35, 1);
+        -webkit-transition-timing-function: ease-out;
+        -moz-transition-timing-function: ease-out;
+        -o-transition-timing-function: ease-out;
         transition-timing-function: ease-out;
-        transition-duration: 0.5s;
+        -webkit-transition-duration: 0.4s;
+        -moz-transition-duration: 0.4s;
+        -o-transition-duration: 0.4s;
+        transition-duration: 0.4s;
         will-change: opacity;
     }
 
     .infinitum__item--hide {
         opacity: 0;
 
-        transition-duration: 0.2s;
+        -webkit-transition-timing-function: ease;
+        -moz-transition-timing-function: ease;
+        -o-transition-timing-function: ease;
         transition-timing-function: ease;
+        -webkit-transition-duration: 0.2s;
+        -moz-transition-duration: 0.2s;
+        -o-transition-duration: 0.2s;
+        transition-duration: 0.2s;
 
         pointer-events: none;
     }
 
-    .infinitum__track--static .infinitum__item {
-        transition-duration: 0.01s;
-    }
-
+    .infinitum__track--static .infinitum__item,
     .infinitum__track--static .infinitum__item--hide {
+        -webkit-transition-duration: 0.01s;
+        -moz-transition-duration: 0.01s;
+        -o-transition-duration: 0.01s;
         transition-duration: 0.01s;
     }
 
     .infinitum__track--slow .infinitum__item {
+        -webkit-transition-duration: 0.4s;
+        -moz-transition-duration: 0.4s;
+        -o-transition-duration: 0.4s;
         transition-duration: 0.4s;
-    }
+}
 
     .infinitum__track--slow .infinitum__item--hide {
+        -webkit-transition-duration: 0.2s;
+        -moz-transition-duration: 0.2s;
+        -o-transition-duration: 0.2s;
         transition-duration: 0.2s;
-    }
+}
 
     .infinitum__track--medium infinitum__item {
+        -webkit-transition-duration: 0.3s;
+        -moz-transition-duration: 0.3s;
+        -o-transition-duration: 0.3s;
         transition-duration: 0.3s;
-    }
+}
 
     .infinitum__track--medium infinitum__item--hide {
+        -webkit-transition-duration: 0.15s;
+        -moz-transition-duration: 0.15s;
+        -o-transition-duration: 0.15s;
         transition-duration: 0.15s;
-    }
+}
 
     .infinitum__track--fast .infinitum__item {
+        -webkit-transition-duration: 0.2s;
+        -moz-transition-duration: 0.2s;
+        -o-transition-duration: 0.2s;
         transition-duration: 0.2s;
-    }
+}
 
     .infinitum__track--fast .infinitum__item--hide {
+        -webkit-transition-duration: 0.1s;
+        -moz-transition-duration: 0.1s;
+        -o-transition-duration: 0.1s;
         transition-duration: 0.1s;
-    }
+}
 
     .infinitum .infinitum__item--current {
 	    color: white;
