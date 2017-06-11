@@ -128,14 +128,16 @@
 
     var CLASS = {
         self: "infinitum",
-        track: "infinitum__track",
-        item: "infinitum__item",
 
+        item: "infinitum__item",
         current: "infinitum__item--current",
+        possibleCurrent: "infinitum__item--possible-current",
         hide: "infinitum__item--hide",
         toEnd: "infinitum__item--to-end",
         toStart: "infinitum__item--to-start",
 
+        track: "infinitum__track",
+        moving: "infinitum__track--moving",
         speed0: "infinitum__track--static",
         speed1: "infinitum__track--slow",
         speed2: "infinitum__track--medium",
@@ -149,8 +151,15 @@
 
     var DATA = {
         willLeft: "willLeft",
+        willTranslate: "willTranslate",
 
         fakeTransitionTimeout: "fakeTransitionTimeout"
+    };
+
+    var POSITION = {
+        START: "start",
+        END: "end",
+        CENTER: "center"
     };
 
     var DEFAULTS = {
@@ -158,10 +167,13 @@
         trackSelector: null,
         itemSelector: null,
 
-        clearLeft: true,
+        wheelKeysTapSetCurrent: true,
 
-        live: true,
-        animateLive: false,
+        clearLeft: true,
+        breakAll: false,
+        leftBreak: POSITION.CENTER,
+        rightBreak: POSITION.START,
+        breakOnEdge: false,
 
         refreshItems: true
     };
@@ -204,13 +216,15 @@
         key: "key",
         scroll: "scroll",
         change: "change",
-        willChange: "willchange"
+        possibleChange: "possiblechange"
     };
 
     Infinitum.DIR = {
         LEFT: 1,
         RIGHT: 2
     };
+
+    Infinitum.POSITION = POSITION;
 
     Infinitum.FAKE_TRANSITION_TIMEOUT = 700;
 
@@ -262,7 +276,7 @@
 
         this._prepareSelf(true);
 
-        this._setCurrent($item, false, true);
+        this._setCurrent($item);
     };
 
     Infinitum.prototype.on = function (event, handler) {
@@ -315,12 +329,12 @@
 
     Infinitum.prototype.next = function () {
 
-        this._setCurrent(this.findNext(), false, true);
+        this._setCurrent(this.findNext(), false, false, true);
     };
 
     Infinitum.prototype.prev = function () {
 
-        this._setCurrent(this.findPrev(), false, true);
+        this._setCurrent(this.findPrev(), false, true, true);
     };
 
     Infinitum.prototype._prepareSelf = function (onlyRect) {
@@ -348,8 +362,8 @@
         this.$track
             .addClass(CLASS.track)
             .css({
-            minHeight: this.$track.css("height")
-        });
+                minHeight: this.$track.css("height")
+            });
 
         this._setTrackPosition(0, false);
     };
@@ -384,7 +398,9 @@
             return;
         }
 
-        this._setCurrent(this._findCurrentItem(), true, false);
+        this._setCurrent(this._findCurrentItem(), true);
+
+        this._$possibleCurrent = this.$currentItem;
     };
 
     Infinitum.prototype._initEvents = function () {
@@ -527,9 +543,6 @@
         cancelAnimationFrame(this._animate);
         this._shouldCancelRAF = true;
 
-        this._setTrackPosition(Math.round(getTranslate(this.$track).x));
-        this.$track.css(TRANSITION_PROP, "none");
-
         this._lastClientY = getClientValue(event, "y", this._pointerIndex);
         this._lastClientX = getClientValue(event, "x", this._pointerIndex);
 
@@ -620,18 +633,31 @@
                     return;
                 }
 
-                this._setCurrent($item, false, true);
+                if (this.options.wheelKeysTapSetCurrent) {
+
+                    this._setCurrent($item, false);
+
+                } else {
+
+                    this._moveToItem($item, false);
+                }
             }
 
             return !$item.length;
         }
 
-        this.setCurrent(this._findCurrentItem());
+        this._setCurrent(this._findCurrentItem(), false, false, false, true);
+
+        this.$track.removeClass(CLASS.moving);
 
         event.preventDefault();
     };
 
     Infinitum.prototype._onWheel = function (event) {
+
+        this.$track.off(TRANSITIONEND + this.NS);
+        cancelAnimationFrame(this._animate);
+        this._shouldCancelRAF = true;
 
         this._lastDir = (event.originalEvent.detail || event.originalEvent.deltaY || event.originalEvent.deltaX) > 0 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
 
@@ -644,23 +670,27 @@
             return;
         }
 
+        this.$self.focus();
+
         this._prepareSelf(true);
 
-        if (this.options.animateLive) {
+        if (this.options.wheelKeysTapSetCurrent) {
 
-            this._moveToItem($item);
-
-            this.$currentItem = $item;
+            this._setCurrent($item, false, this._lastDir === Infinitum.DIR.RIGHT, true);
 
         } else {
 
-            this._setCurrent($item);
+            this._moveToItem($item, this._lastDir === Infinitum.DIR.RIGHT, true);
         }
 
         event.preventDefault();
     };
 
     Infinitum.prototype._onKey = function (event) {
+
+        this.$track.off(TRANSITIONEND + this.NS);
+        cancelAnimationFrame(this._animate);
+        this._shouldCancelRAF = true;
 
         this._lastDir = [37, 38].indexOf(event.which) === -1 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
 
@@ -675,15 +705,13 @@
 
         this._prepareSelf(true);
 
-        if (this.options.animateLive) {
+        if (this.options.wheelKeysTapSetCurrent) {
 
-            this._moveToItem($item);
-
-            this.$currentItem = $item;
+            this._setCurrent($item, false, this._lastDir === Infinitum.DIR.RIGHT, true);
 
         } else {
 
-            this._setCurrent($item);
+            this._moveToItem($item, this._lastDir === Infinitum.DIR.RIGHT, true);
         }
 
         event.preventDefault();
@@ -704,14 +732,14 @@
         return eventObj;
     };
 
-    Infinitum.prototype._moveTrack = function (x, animate) {
+    Infinitum.prototype._moveTrack = function (x, animate, speedByPointer) {
 
-        var value = Math.round(getTranslate(this.$track).x) + Math.round(x);
+        var value = /*Math.round*/(getTranslate(this.$track).x) + Math.round(x);
 
-        this._setTrackPosition(value, animate);
+        this._setTrackPosition(value, animate, speedByPointer);
     };
 
-    Infinitum.prototype._setTrackPosition = function (position, animate) {
+    Infinitum.prototype._setTrackPosition = function (position, animate, speedByPointer) {
 
         this.$track.css(TRANSITION_PROP, animate ? "" : "none");
 
@@ -722,6 +750,10 @@
             if (typeof animate === "number") {
 
                 this.$track.css(TRANSITION_PROP + "Duration", animate + "ms");
+
+            } else {
+
+                this._setTrackSpeed(position, speedByPointer);
             }
 
             this.$track.on(TRANSITIONEND + this.NS, function (event) {
@@ -730,28 +762,58 @@
 
                     return;
                 }
-
+                log("ok");
                 cancelAnimationFrame(this._animate);
 
                 this._shouldCancelRAF = true;
 
-                this.$track.css(TRANSITION_PROP + "Duration", "");
-                this.$track.off(TRANSITIONEND + this.NS);
+                this.$track.css(TRANSITION_PROP + "Duration", "")
+                    .off(TRANSITIONEND + this.NS);
 
                 this._prepareSelf(true);
 
             }.bind(this));
         }
 
-        this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + Math.round(position) + "px, 0px, 0px)" : "translateX(" + Math.round(position) + "px)");
+        this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + /*Math.round*/(position) + "px, 0px, 0px)" : "translateX(" + /*Math.round*/(position) + "px)");
+
+        this.$track.data(DATA.willTranslate + this.NS, position);
 
         if (animate) {
 
             requestAnimationFrame(this._animate);
 
-            this._lastTrackX = Math.round(getTranslate(this.$track).x);
+            this._lastTrackX = /*Math.round*/(getTranslate(this.$track).x);
 
         }
+    };
+
+    Infinitum.prototype._setTrackSpeed = function (toPosition, usePointer) {
+
+        var fromPosition = getTranslate(this.$track).x,
+
+            diff = Math.abs(fromPosition - toPosition),
+
+            k = 100;
+
+        if (usePointer) {
+
+            var avgSpeed = this._speed.reduce(function (acc, current) {
+
+                return acc + current;
+
+            }, 0) / this._speed.length;
+
+            k = k / Math.max(1, Math.log(avgSpeed / 3));
+
+            k = Math.max(Math.min(k, 150), 50) * 2;
+        }
+
+        var speed = (k * Math.max(1, Math.log(diff / 5))).toFixed();
+
+        speed = Math.max(Math.min(speed, 650), 150);
+
+        this.$track.css(TRANSITION_PROP + "Duration", speed  + "ms");
     };
 
     Infinitum.prototype._setFadeSpeed = function (move, noFade) {
@@ -777,7 +839,7 @@
 
         }, 0) / this._speed.length;
 
-        if (avgSpeed < 12) {
+        if (avgSpeed < 10) {
 
             this.$track
                 .removeClass(CLASS.speed0)
@@ -785,7 +847,7 @@
                 .removeClass(CLASS.speed3)
                 .addClass(CLASS.speed1);
 
-        } else if (avgSpeed < 24) {
+        } else if (avgSpeed < 20) {
 
             this.$track
                 .removeClass(CLASS.speed0)
@@ -805,6 +867,8 @@
 
     Infinitum.prototype._move = function (x, animation, fakeMove) {
 
+        this.$track.addClass(CLASS.moving);
+
         this._setFadeSpeed(x, fakeMove);
 
         if (!animation) {
@@ -814,7 +878,9 @@
 
         this._sortItems();
 
-        var animationDoneAndCurrentNotFirst = (animation && this._shouldCancelRAF && this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current));
+        var animationDone = animation && this._shouldCancelRAF,
+
+            animationDoneAndCurrentNotFirst = (animationDone && this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current));
 
         if (x < 0 || animationDoneAndCurrentNotFirst || fakeMove) {
 
@@ -825,14 +891,21 @@
             this._moveRightItemsOverToTheStart();
         }
 
-        if ((this.options.live && (this.options.animateLive || !animation)) && !fakeMove) {
+        if (!fakeMove) {
 
-            this._setCurrent(this._findCurrentItem(), true);
+            this._setPossibleCurrentItem(animation && this._shouldCancelRAF);
         }
 
         if (animation && !this._shouldCancelRAF) {
 
             requestAnimationFrame(this._animate);
+
+            return;
+        }
+
+        if (animationDone) {
+
+            this.$track.removeClass(CLASS.moving);
         }
     };
 
@@ -867,7 +940,9 @@
                 willStartItem = item;
 
                 willStartItemRect = {
-                    left: rect.left + diff
+                    left: rect.left + diff,
+                    right: rect.right + diff,
+                    width: rect.width
                 };
             }
 
@@ -878,11 +953,13 @@
                 willEndItem = item;
             }
 
-            if (rect.left + (rect.width / 2) < this._selfRect.left) {
+            var breakEdge = this._getBreakEdge(rect);
+
+            if (breakEdge.left < this._selfRect.left) {
 
                 leftItemsOver.push(item);
 
-            } else if (rect.right > this._selfRect.right) {
+            } else if (breakEdge.right > this._selfRect.right) {
 
                 rightItemsOver.push(item);
 
@@ -920,10 +997,51 @@
             this.$rightItemsOver = $(rightItemsOver);
         }
 
-        if (!this.$leftItemsOver.length && !this.$rightItemsOver.length && willStartItemRect.left > this._selfRect.left) {
+        if (!this.options.breakOnEdge && !this.$leftItemsOver.length && !this.$rightItemsOver.length && willStartItemRect.left > this._selfRect.left) {
 
             this.$rightItemsOver = this.$willEndItem;
         }
+    };
+
+    Infinitum.prototype._getBreakEdge = function (itemRect) {
+
+        var leftBreakEdge = itemRect.left,
+            rightBreakEdge = itemRect.right;
+
+        switch (this.options.leftBreak) {
+
+            case Infinitum.POSITION.CENTER:
+
+                leftBreakEdge = leftBreakEdge + (itemRect.width / 2);
+
+                break;
+
+            case Infinitum.POSITION.END:
+
+                leftBreakEdge = leftBreakEdge + itemRect.width - 0.1;
+
+                break;
+        }
+
+        switch (this.options.rightBreak) {
+
+            case Infinitum.POSITION.START:
+
+                rightBreakEdge = rightBreakEdge - itemRect.width + 0.1;
+
+                break;
+
+            case Infinitum.POSITION.CENTER:
+
+                rightBreakEdge = rightBreakEdge - (itemRect.width / 2);
+
+                break;
+        }
+
+        return {
+            left: leftBreakEdge,
+            right: rightBreakEdge
+        };
     };
 
     Infinitum.prototype._moveLeftItemsOverToTheEnd = function (animationDoneAndCurrentNotFirst) {
@@ -938,12 +1056,16 @@
 
                 width = Math.round($this.outerWidth());
 
-            if (!_this.options.clearLeft && _this.endItemPosWill + addedWidth >= _this._selfRect.right/* + (width / 2)*/) {
 
-                return;
+            if (!_this.options.breakAll) {
+
+                if (!_this.options.clearLeft && _this.endItemPosWill + addedWidth >= _this._selfRect.right) {
+
+                    return;
+                }
             }
 
-            if (animationDoneAndCurrentNotFirst && $this.hasClass(CLASS.current)) {
+            if (animationDoneAndCurrentNotFirst && ($this.hasClass(CLASS.current) || !_this.options.clearLeft)) {
 
                 return;
             }
@@ -974,9 +1096,12 @@
 
                 width = Math.round($this.outerWidth());
 
-            if (_this.startItemPosWill - addedWidth <= _this._selfRect.left/* + (width / 2)*/) {
+            if (!_this.options.breakAll) {
 
-                return;
+                if (_this.startItemPosWill - addedWidth <= _this._selfRect.left) {
+
+                    return;
+                }
             }
 
             if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toEnd)) {
@@ -986,7 +1111,6 @@
                 _this._breakItem($(this), "start");
             }
         });
-
 
         if (this._shouldCancelRAF) {
 
@@ -1083,10 +1207,10 @@
 
     Infinitum.prototype._animate = function () {
 
-        this._move(Math.round(getTranslate(this.$track).x) - this._lastTrackX, true);
+        this._move(/*Math.round*/(getTranslate(this.$track).x) - this._lastTrackX, true);
     };
 
-    Infinitum.prototype._setCurrent = function ($item, noTrackMove, autoOnLive) {
+    Infinitum.prototype._setCurrent = function ($item, noTrackMove, reverse, isSibling, speedByPointer) {
 
         if (!$item || !$item[0]) {
 
@@ -1095,40 +1219,23 @@
 
         if ($item[0] !== this.$currentItem[0]) {
 
-            if (!autoOnLive || !this.options.live || !this.options.animateLive) {
+            var changeEvent = this._triggerChangeTypeEvent(Infinitum.EVENT.change, null, $item);
 
-                var changeEvent = this._triggerChangeTypeEvent(Infinitum.EVENT.change, null, $item);
+            if (changeEvent.isDefaultPrevented()) {
 
-                if (changeEvent.isDefaultPrevented()) {
+                if (!noTrackMove) {
 
-                    if (!noTrackMove) {
-
-                        this._moveToItem(this.$currentItem);
-                    }
-
-                    return;
+                    this._moveToItem(this.$currentItem, false, isSibling, speedByPointer);
                 }
 
-                this.$currentItem.removeClass(CLASS.current);
-
-                this.$currentItem = $item;
-
-                $item.addClass(CLASS.current);
-
-            } else {
-
-                var willChangeEvent = this._triggerChangeTypeEvent(Infinitum.EVENT.willChange, null, $item);
-
-                if (willChangeEvent.isDefaultPrevented()) {
-
-                    if (!noTrackMove) {
-
-                        this._moveToItem(this.$currentItem);
-                    }
-
-                    return;
-                }
+                return;
             }
+
+            this.$currentItem.removeClass(CLASS.current);
+
+            this.$currentItem = $item;
+
+            $item.addClass(CLASS.current);
         }
 
         if (noTrackMove) {
@@ -1136,27 +1243,78 @@
             return;
         }
 
-        this._moveToItem($item);
+        this._moveToItem($item, reverse, isSibling, speedByPointer);
     };
 
-    Infinitum.prototype._moveToItem = function ($item) {
+    Infinitum.prototype._moveToItem = function ($item, reverse, oneItemMode, speedByPointer) {
 
         var attrLeft = parseFloat($item.data(DATA.willLeft + this.NS)),
             cssLeft = parseFloat($item.css("left")),
 
-            itemPos = this._getRect($item[0]).left + (attrLeft - cssLeft) - this._selfRect.left;
+            rect = this._getRect($item[0]),
 
-        if (!itemPos) {
+            willTranslate;
+
+        if (!reverse) {
+
+            if (oneItemMode) {
+
+                willTranslate = this.$track.data(DATA.willTranslate + this.NS);
+
+                var $prev = this.findPrev($item),
+
+                    prevWidth = Math.round($prev.outerWidth());
+
+                this._setTrackPosition(willTranslate - prevWidth, true, speedByPointer);
+
+                return;
+            }
+
+            var itemPos = rect.left + (attrLeft - cssLeft) - this._selfRect.left;
+
+            if (!itemPos) {
+
+                return;
+            }
+
+            this._moveTrack(-itemPos, true, speedByPointer);
+
+        } else {
+
+            willTranslate = this.$track.data(DATA.willTranslate + this.NS);
+
+            this._setTrackPosition(willTranslate + rect.width, true, speedByPointer);
+        }
+    };
+
+    Infinitum.prototype._setPossibleCurrentItem = function (clear) {
+
+        if (clear) {
+
+            this._$possibleCurrent.removeClass(CLASS.possibleCurrent);
+
+            this._setCurrent(this._$possibleCurrent);
 
             return;
         }
 
-        this._moveTrack(-itemPos, true);
+        var $possible = this._findCurrentItem();
+
+        if ($possible[0] !== this._$possibleCurrent[0]) {
+
+            $possible.addClass(CLASS.possibleCurrent);
+
+            this._$possibleCurrent.removeClass(CLASS.possibleCurrent);
+
+            this._triggerChangeTypeEvent(Infinitum.EVENT.possibleChange, null, $possible);
+
+            this._$possibleCurrent = $possible;
+        }
     };
 
     Infinitum.prototype._findCurrentItem = function () {
 
-        if (this._lastDir === Infinitum.DIR.LEFT || !this.options.clearLeft) {
+        if (this._lastDir === Infinitum.DIR.LEFT || !this.options.clearLeft || this.options.breakAll) {
 
             return this._findClosestItem();
         }
@@ -1179,9 +1337,9 @@
 
                 willLeft = item.getBoundingClientRect().left + (attrLeft - cssLeft);
 
-            if (closestLeftItemPos === null || Math.abs(closestLeftItemPos) > Math.abs(willLeft - this._selfRect.left)) {
+            if (closestLeftItemPos === null || Math.abs(willLeft - this._selfRect.left) < closestLeftItemPos) {
 
-                closestLeftItemPos = willLeft - this._selfRect.left;
+                closestLeftItemPos = Math.abs(willLeft - this._selfRect.left);
 
                 closestLeftItem = item;
             }

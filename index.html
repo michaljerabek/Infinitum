@@ -48,7 +48,8 @@
         .example2,
         .example3,
         .example4,
-        .example5 {
+        .example5,
+        .example6 {
             font-size: 0;
             white-space: nowrap;
 
@@ -67,14 +68,16 @@
         .example2__item,
         .example3__item,
         .example4__item,
-        .example5__item {
+        .example5__item,
+        .example6__item {
             display: inline-block;
         }
 
         .example0__item,
         .example1__item,
         .example2__item,
-        .example3__item {
+        .example3__item,
+        .example6__item {
             font-size: 32px;
 
             padding: 15px 20px;
@@ -83,7 +86,29 @@
         .example3__item {
 	        width: calc(50% - 40px);
 
-            overflow: hidden;
+            overflow-y: hidden;
+        }
+
+        .example6__item {
+            text-align: center;
+
+	        width: 40px;
+        }
+
+        .example6__item span {
+            transform: scale(1);
+
+            display: inline-block;
+
+            transition: transform;
+            transition-duration: 0.15s;
+        }
+
+        .example6__item.infinitum__item--possible-current span,
+        .example6__item.infinitum__item--current span {
+            transform: scale(1.75);
+
+            display: inline-block;
         }
 
         .example4__item,
@@ -91,6 +116,10 @@
             line-height: 0;
 
             filter: grayscale(1);
+        }
+
+        a {
+            color: inherit;
         }
 
     </style>
@@ -372,6 +401,57 @@
             </script>
 
             <!--–––––––– // EXAMPLE5 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE6 ** –––––––––-->
+
+            <h2>Example 6</h2>
+
+            <div class="example6">
+
+                <div class="example6__wrapper">
+
+                    <div class="example6__item"><span>1</span></div>
+                    <div class="example6__item"><span>2</span></div>
+                    <div class="example6__item"><span>3</span></div>
+                    <div class="example6__item"><span>4</span></div>
+                    <div class="example6__item"><span>5</span></div>
+                    <div class="example6__item"><span>6</span></div>
+                    <div class="example6__item"><span>7</span></div>
+                    <div class="example6__item"><span>8</span></div>
+                    <div class="example6__item"><span>9</span></div>
+                    <div class="example6__item"><span>10</span></div>
+                    <div class="example6__item"><span>11</span></div>
+                    <div class="example6__item"><span>12</span></div>
+                    <div class="example6__item"><span>13</span></div>
+                    <div class="example6__item"><span>14</span></div>
+                    <div class="example6__item"><span>15</span></div>
+                    <div class="example6__item"><span>16</span></div>
+                    <div class="example6__item"><span>17</span></div>
+                    <div class="example6__item"><span>18</span></div>
+                    <div class="example6__item"><span>19</span></div>
+                    <div class="example6__item"><span>20</span></div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example6 = new Infinitum({
+                        selector: ".example6",
+                        breakAll: true,
+                        clearLeft: false
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE6 // –––––––––-->
 
 
         </div>
