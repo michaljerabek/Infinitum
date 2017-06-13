@@ -1,3 +1,51 @@
+.infinitum__item {
+/*    position: relative;*/
+}
+
+.infinitum {
+/*    position: relative;*/
+
+/*    overflow: visible !important;*/
+}
+/*
+
+.infinitum.infinitum:after {
+    content: attr(data-x);
+    font-size: 12px;
+    white-space: normal;
+    word-break: break-all;
+
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    top: auto;
+    right: auto;
+
+    width: auto;
+    height: auto;
+    padding: 5px;
+
+    color: #fff;
+    background: darkslategray;
+}
+
+.infinitum__item:after {
+    content: attr(data-x);
+    font-size: 12px;
+    white-space: normal;
+    word-break: break-all;
+
+    position: absolute;
+    top: 0;
+    right: 0;
+
+    padding: 5px;
+
+    color: #fff;
+    background-color: #000;
+}
+*/
+
 .infinitum__track {
     position: relative;
 

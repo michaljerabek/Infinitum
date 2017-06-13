@@ -49,6 +49,7 @@
         .example3,
         .example4,
         .example5,
+        .example7,
         .example6 {
             font-size: 0;
             white-space: nowrap;
@@ -69,6 +70,7 @@
         .example3__item,
         .example4__item,
         .example5__item,
+        .example7__item,
         .example6__item {
             display: inline-block;
         }
@@ -77,6 +79,7 @@
         .example1__item,
         .example2__item,
         .example3__item,
+        .example7__item,
         .example6__item {
             font-size: 32px;
 
@@ -89,13 +92,59 @@
             overflow-y: hidden;
         }
 
+        .example7__item,
         .example6__item {
             text-align: center;
 
-	        width: 40px;
+	        width: 44px;
+        }
+
+        .example7 {
+            position: relative;
+
+            padding: 10px 0;
+
+            overflow: hidden;
+        }
+
+        .example7:before {
+            content: "";
+
+            z-index: 2;
+            position: absolute;
+            top: 0px;
+            right: 0px;
+
+            width: 50%;
+            height: 100%;
+
+            background-image: -webkit-linear-gradient(left, transparent, #eee);
+            background-image: -o-linear-gradient(left, transparent, #eee);
+            background-image: linear-gradient(to right, transparent, #eee);
+
+            pointer-events: none;
+        }
+
+        .example7:after {
+            content: "";
+
+            position: absolute;
+            top: 0px;
+            left: 0px;
+
+            width: 100%;
+            height: 100%;
+
+            outline: 1px solid deepskyblue;
+            pointer-events: none;
+        }
+
+        .example7__item {
+            outline: 1px solid lime;
         }
 
         .example6__item span {
+        .example7__item span,
             transform: scale(1);
 
             display: inline-block;
@@ -105,7 +154,9 @@
         }
 
         .example6__item.infinitum__item--possible-current span,
-        .example6__item.infinitum__item--current span {
+        .example6__item.infinitum__item--current span,
+        .example7__item.infinitum__item--possible-current span,
+        .example7__item.infinitum__item--current span {
             transform: scale(1.75);
 
             display: inline-block;
@@ -126,6 +177,8 @@
 
 </head>
 <body>
+
+    <button onclick="eval(prompt('execute'))" style="position: fixed; top:0; left:0;padding: 5px;">JavaScript</button>
 
     <div class="wrapper">
 
@@ -152,7 +205,7 @@
                 $(function () {
 
                     window.example0 = new Infinitum({
-                        selector: ".example0"
+                        selector: ".example0",
                     });
 
                 });
@@ -452,6 +505,59 @@
             </script>
 
             <!--–––––––– // EXAMPLE6 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE7 ** –––––––––-->
+
+            <h2>Example 7</h2>
+
+            <div class="example7">
+
+                <div class="example7__wrapper">
+
+                    <div class="example7__item"><span>1</span></div>
+                    <div class="example7__item"><span>2</span></div>
+                    <div class="example7__item"><span>3</span></div>
+                    <div class="example7__item"><span>4</span></div>
+                    <div class="example7__item"><span>5</span></div>
+                    <div class="example7__item"><span>6</span></div>
+                    <div class="example7__item"><span>7</span></div>
+                    <div class="example7__item"><span>8</span></div>
+                    <div class="example7__item"><span>9</span></div>
+                    <div class="example7__item"><span>10</span></div>
+                    <div class="example7__item"><span>11</span></div>
+                    <div class="example7__item"><span>12</span></div>
+                    <div class="example7__item"><span>13</span></div>
+                    <div class="example7__item"><span>14</span></div>
+                    <div class="example7__item"><span>15</span></div>
+                    <div class="example7__item"><span>16</span></div>
+                    <div class="example7__item"><span>17</span></div>
+                    <div class="example7__item"><span>18</span></div>
+                    <div class="example7__item"><span>19</span></div>
+                    <div class="example7__item"><span>20</span></div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example7 = new Infinitum({
+                        selector: ".example7",
+//                        fade: false,
+                        leftBreak: Infinitum.POSITION.END,
+                        current: Infinitum.CURRENT.FULL,
+                        fade: Infinitum.POSITION.START
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE7 // –––––––––-->
 
 
         </div>
