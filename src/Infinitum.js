@@ -202,12 +202,19 @@
         fade: true,
 
 
-        /* Infinitum.CURRENT - kterou položku považovat za výchozí
+        /* Infinitum.CURRENT - kterou položku považovat za výchozí ve směru (výchozí je vlevo - pousouvání do leva)
          *     - .CLOSEST - nejbližší (podle mode)
          *     - .STILL_INSIDE - jakákliv část je uvnitř (podle mode)
          *     - .FULL - celá položka je uvnitř (podle mode)
          */
-        current: CURRENT.CLOSEST,
+        currentIn: CURRENT.CLOSEST,
+
+        /* Infinitum.CURRENT - kterou položku považovat za výchozí v protisměru  (výchozí je vpravo - pousouvání do prava)
+         *     - .CLOSEST - nejbližší (podle mode)
+         *     - .STILL_INSIDE - jakákliv část je uvnitř (podle mode)
+         *     - .FULL - celá položka je uvnitř (podle mode)
+         */
+        currentOut: CURRENT.STILL_INSIDE,
 
 
         /* Boolean - přesouvat položky z na konec
@@ -216,7 +223,7 @@
 
         /* Boolean - přesouvat všechny položky
          */
-        breakAll: false,
+        breakAll: false, //BUGGY!
 
         /* Infinitum.POSITION - kdy přesunou položky na levé straně
          * pokud je fade false, výchozí je Infinitum.POSITION.END
@@ -326,12 +333,13 @@
 
         this.initialized = true;
 
-        var _this = this;
-
+//        var _this = this;
+//
 //        function debug() {
 //
 //            _this.$items.each(function (i, item) {
-//                $t(item).attr("data-x", _this._getRect(item).left);
+////                $t(item).attr("data-y", (_this._getRect(item).left.toFixed(2)));
+//                $t(item).attr("data-y", $t(item).data(DATA.translate + _this.NS) + $t(item).data(DATA.offset + _this.NS));
 //            });
 //
 //            _this.$self.attr("data-x", _this._selfRect.left);
@@ -358,7 +366,6 @@
 
         this.$track.css(TRANSFORM_PROP, "")
             .css(TRANSITION_PROP + "Duration", "")
-//            .css("min-height", "")
             .off(this.NS, "")
             .removeClass(CLASS.track)
             .removeClass(CLASS.moving)
@@ -366,7 +373,7 @@
             .removeClass(CLASS.speed1)
             .removeClass(CLASS.speed2)
             .removeClass(CLASS.speed3)
-            .removeData(DATA.willTranslate + this.NS);
+            .removeData([DATA.willTranslate + this.NS, DATA.fakeTransitionTimeout + this.NS]);
 
         this.$items.each(function (i, item) {
 
@@ -421,8 +428,6 @@
             this._prepareItems(true);
 
             this._setTrackPosition(this.$currentItem.data(DATA.translate + this.NS) - this.$currentItem.data(DATA.offset + this.NS));
-//            this._setTrackPosition(getTranslate(this.$currentItem).x - this.$currentItem.data(DATA.offset + this.NS));
-//            this._setTrackPosition(-parseFloat(this.$currentItem.css("left")));
 
             //simulováním pohybu (třetí param. fakeMove) se položky zařadí na správné pozice
             this._move(0, false, true);
@@ -545,19 +550,15 @@
 
         var box = this.$self.css(["padding-left", "padding-right", "border-left-width", "border-right-width"]);
 
-        this._selfRect.left = /*Math.round*/(this._origSelfRect.left) + parseFloat(box["padding-left"]) + parseFloat(box["border-left-width"]);
-        this._selfRect.right = /*Math.round*/(this._origSelfRect.right) - parseFloat(box["padding-right"]) - parseFloat(box["border-right-width"]);
+        this._selfRect.left = (this._origSelfRect.left) + parseFloat(box["padding-left"]) + parseFloat(box["border-left-width"]);
+        this._selfRect.right = (this._origSelfRect.right) - parseFloat(box["padding-right"]) - parseFloat(box["border-right-width"]);
     };
 
     Infinitum.prototype._prepareTrack = function () {
 
         this.$track = this.options.trackSelector ? $(this.options.trackSelector) : this.$self.children().first();
 
-        this.$track
-            .addClass(CLASS.track)
-            .css({
-//                minHeight: this.$track.css("height")
-            });
+        this.$track.addClass(CLASS.track);
 
         this._speed = [7, 7, 7, 7, 7];
 
@@ -585,19 +586,14 @@
                 CSS = {};
 
             CSS[TRANSFORM_PROP] = T3D ? "translate3d(0px, 0px, 0px)" : "translateX(0px)";
-//
+
             $this.css(CSS);
-//
-//            $this.css({
-//                position: "absolute",
-//                left: lastLeft
-//            });
 
             $this.data(DATA.translate + this.NS, 0);
             $this.data(DATA.offset + this.NS, lastLeft);
             $this.data(DATA.willLeft + this.NS, lastLeft);
 
-            lastLeft += /*Math.round*/($this.outerWidth());
+            lastLeft += ($this.outerWidth());
 
         }.bind(this));
 
@@ -719,7 +715,7 @@
     };
 
     Infinitum.prototype._onPointerStart = function (event) {
-
+        console.clear();
         if (this.frozen) {
 
             return;
@@ -753,9 +749,13 @@
 
         this._fixVertical = null;
 
-        this.$track.off(TRANSITIONEND + this.NS);
-        cancelAnimationFrame(this._animate);
+        clearTimeout(this.$track.data(DATA.fakeTransitionTimeout + this.NS));
+        this.$track.off(TRANSITIONEND + this.NS)
+            .data(DATA.fakeTransitionTimeout, null);
+
         this._shouldCancelRAF = true;
+//        this._forceCancelRAF = true;
+//        cancelAnimationFrame(this._animate);
 
         this._lastClientY = getClientValue(event, "y", this._pointerIndex);
         this._lastClientX = getClientValue(event, "x", this._pointerIndex);
@@ -808,7 +808,9 @@
 
         if (diffX) {
 
-            this._move(diffX);
+            this._forceCancelRAF = true;
+
+            this._move(diffX, false, false);
         }
 
         this._lastDir = !diffX ? this._lastDir : clientX > this._lastClientX ? Infinitum.DIR.RIGHT : Infinitum.DIR.LEFT;
@@ -835,22 +837,22 @@
 
     Infinitum.prototype._onPointerEnd = function (event) {
 
-        if (this._byMouse && event.button !== 0) {
+        if ((this._byMouse && event.button !== 0) || !this._hasPointer) {
 
             return;
         }
 
         this._hasPointer = false;
+        this._forceCancelRAF = false;
 
         $win.off("mousemove" + this.NS);
         this.$self.off("touchmove" + this.NS);
 
         if (!this._trackMoved && this._fixVertical === null) {
 
-            return this._onTap(event);
+             return this._onTap(event);
         }
-
-//        this._parking = true;
+        this._parking = true;
 
         this._setCurrent(this._findCurrentItem(), false, false, false, true);
 
@@ -894,9 +896,12 @@
 
         this._parking = false;
 
-        this.$track.off(TRANSITIONEND + this.NS);
-        cancelAnimationFrame(this._animate);
+        clearTimeout(this.$track.data(DATA.fakeTransitionTimeout + this.NS));
+        this.$track.off(TRANSITIONEND + this.NS)
+            .data(DATA.fakeTransitionTimeout, null);
         this._shouldCancelRAF = true;
+//        this._forceCancelRAF = true;
+        cancelAnimationFrame(this._animate);
 
         this._lastDir = (event.originalEvent.detail || event.originalEvent.deltaY || event.originalEvent.deltaX) > 0 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
 
@@ -934,9 +939,12 @@
 
         this._parking = false;
 
-        this.$track.off(TRANSITIONEND + this.NS);
-        cancelAnimationFrame(this._animate);
+        clearTimeout(this.$track.data(DATA.fakeTransitionTimeout + this.NS));
+        this.$track.off(TRANSITIONEND + this.NS)
+            .data(DATA.fakeTransitionTimeout, null);
         this._shouldCancelRAF = true;
+//        this._forceCancelRAF = true;
+        cancelAnimationFrame(this._animate);
 
         this._lastDir = [37, 38].indexOf(event.which) === -1 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
 
@@ -980,49 +988,62 @@
 
     Infinitum.prototype._moveTrack = function (x, animate, speedByPointer) {
 
-        var value = /*Math.round*/(getTranslate(this.$track).x) + /*Math.round*/(x);
+        var value = (getTranslate(this.$track).x) + (x);
 
         this._setTrackPosition(value, animate, speedByPointer);
     };
 
     Infinitum.prototype._setTrackPosition = function (position, animate, speedByPointer) {
 
+        clearTimeout(this.$track.data(DATA.fakeTransitionTimeout + this.NS));
+        this.$track.off(TRANSITIONEND + this.NS)
+            .data(DATA.fakeTransitionTimeout, null);
+
         this.$track.css(TRANSITION_PROP, animate ? "" : "none");
 
         if (animate) {
 
             this._shouldCancelRAF = false;
+            this._forceCancelRAF = false;
 
-            this._setTrackSpeed(position, speedByPointer);
+            var speed = this._setTrackSpeed(position, speedByPointer),
 
-            this.$track.on(TRANSITIONEND + this.NS, function (event) {
+                fakeTransitionEnd,
 
-                if (event.originalEvent.target !== this.$track[0] || !event.originalEvent.propertyName.match(/transform/i)) {
+                onTransitonEnd = function (event) {
 
-                    return;
-                }
+                    if (event && (event.originalEvent.target !== this.$track[0] || !event.originalEvent.propertyName.match(/transform/i))) {
 
-                cancelAnimationFrame(this._animate);
+                        return;
+                    }
 
-                this._shouldCancelRAF = true;
+                    clearTimeout(fakeTransitionEnd);
 
-                this.$track.off(TRANSITIONEND + this.NS)
-                    .css(TRANSITION_PROP + "Duration", "");
+                    this.$track.off(TRANSITIONEND + this.NS)
+                        .css(TRANSITION_PROP + "Duration", "")
+                        .data(DATA.fakeTransitionTimeout + this.NS, null);
 
-                this._generateSelfRect();
+                    this._generateSelfRect();
 
-            }.bind(this));
+                    this._shouldCancelRAF = true;
+                    //cancelAnimationFrame(this._animate);
+
+                }.bind(this);
+
+            this.$track.on(TRANSITIONEND + this.NS, onTransitonEnd);
+
+            fakeTransitionEnd = setTimeout(onTransitonEnd, speed + 50);
+
+            this.$track.data(DATA.fakeTransitionTimeout + this.NS, fakeTransitionEnd);
         }
 
-        this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + /*Math.round*/(position) + "px, 0px, 0px)" : "translateX(" + /*Math.round*/(position) + "px)");
+        this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + (position) + "px, 0px, 0px)" : "translateX(" + (position) + "px)");
 
         this.$track.data(DATA.willTranslate + this.NS, position);
 
         if (animate) {
 
             requestAnimationFrame(this._animate);
-
-
         }
     };
 
@@ -1052,6 +1073,8 @@
         speed = Math.max(Math.min(speed, 650), 150);
 
         this.$track.css(TRANSITION_PROP + "Duration", speed  + "ms");
+
+        return speed;
     };
 
     Infinitum.prototype._setFadeSpeed = function (move, noFade) {
@@ -1067,9 +1090,12 @@
             return;
         }
 
-        this._speed = this._speed.slice(0, 4);
+        if (move) {
 
-        this._speed.unshift(Math.abs(move));
+            this._speed = this._speed.slice(0, 4);
+
+            this._speed.unshift(Math.abs(move));
+        }
 
         var avgSpeed = this._speed.reduce(function (acc, current) {
 
@@ -1113,40 +1139,45 @@
      */
     Infinitum.prototype._move = function (x, animation, fakeMove) {
 
+        clearTimeout(this._fixItemsPositionsTimeout);
+
         this.$track.addClass(CLASS.moving);
 
         this._setFadeSpeed(x, fakeMove);
 
-        if (!animation) {
+        if (!animation && !fakeMove) {
 
             this._moveTrack(x);
         }
 
         this._sortItems();
 
-        var animationDone = animation && this._shouldCancelRAF,
+        var animationDone = animation && this._shouldCancelRAF && (!x || this._forceCancelRAF),
 
             animationDoneAndCurrentNotFirst = animationDone && this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current);
 
         //this._parking = uživatel pustil track (pointerem) a položka se pouze zarovnává - tím se může otočit směr pohybu a položky přeskakovat na opačnou stranu
-        if (!this._parking || !this.options.breakAll) {
+//        if (!this._parking || !this.options.breakAll) {
 
-            if (x <= 0 || animationDoneAndCurrentNotFirst || fakeMove) {
+//        console.log("_move");
+//        console.log(animation, animationDone, animationDoneAndCurrentNotFirst, x, fakeMove, this._shouldCancelRAF, this._forceCancelRAF);
 
-                this._moveLeftItemsOverToTheEnd(animationDoneAndCurrentNotFirst, fakeMove);
+        if (x < 0 || ((animationDoneAndCurrentNotFirst || fakeMove) && this.options.clearLeft)) {
+
+                this._moveLeftItemsOverToTheEnd(animationDoneAndCurrentNotFirst, fakeMove, x || animationDoneAndCurrentNotFirst || fakeMove);
 
             } else if (x > 0) {
 
                 this._moveRightItemsOverToTheStart();
             }
+//        }
+
+        if (!fakeMove) {
+
+            this._setPossibleCurrentItem(animationDone, x);
         }
 
-        if (!fakeMove && (x || animationDone /*|| fakeMove*/)) {
-
-            this._setPossibleCurrentItem(animationDone);
-        }
-
-        if (animation && !this._shouldCancelRAF) {
+        if (!animationDone && animation) {
 
             requestAnimationFrame(this._animate);
 
@@ -1155,7 +1186,41 @@
 
         if (animationDone) {
 
+            if (!fakeMove && animationDoneAndCurrentNotFirst) {
+
+                this._fixItemsPositions();
+            }
+
             this.$track.removeClass(CLASS.moving);
+        }
+    };
+
+    Infinitum.prototype._fixItemsPositions = function () {
+
+        clearTimeout(this._fixItemsPositionsTimeout);
+
+        var fadingsDone = false;
+
+        this.$items.each(function (i, item) {
+
+            var $item = $t(item);
+
+            if ($item.data(DATA.fakeTransitionTimeout + this.NS)) {
+
+                this._fixItemsPositionsTimeout = setTimeout(this._fixItemsPositions.bind(this), 0);
+
+                return false;
+            }
+
+            fadingsDone = i === this.$items.length - 1;
+
+        }.bind(this));
+
+        if (fadingsDone) {
+
+            this._forceCancelRAF = true;
+
+            this._move(this._lastDir === Infinitum.DIR.LEFT ? -1 : 1, true, true);
         }
     };
 
@@ -1183,8 +1248,6 @@
 
                 dataLeft = parseFloat($this.data(DATA.willLeft + this.NS)),
                 cssLeft = $this.data(DATA.translate + this.NS) + $this.data(DATA.offset + this.NS),
-//                cssLeft = getTranslate($this).x + $this.data(DATA.offset + this.NS),
-//                cssLeft = parseFloat($this.css("left")),
 
                 diff = dataLeft - cssLeft;
 
@@ -1300,22 +1363,25 @@
         };
     };
 
-    Infinitum.prototype._moveLeftItemsOverToTheEnd = function (animationDoneAndCurrentNotFirst, byFakeMove) {
+    Infinitum.prototype._moveLeftItemsOverToTheEnd = function (animationDoneAndCurrentNotFirst, byFakeMove, moved) {
 
         var _this = this,
 
             addedWidth = 0; //kolik px už bylo přidáno na konec
 
+//        console.log("_moveLeftItemsOverToTheEnd");
+//        console.log(this.$leftItemsOver);
+
         this.$leftItemsOver.each(function () {
 
             var $this = $t(this),
 
-                width = /*Math.round*/($this.outerWidth());
+                width = ($this.outerWidth());
 
             if (!_this.options.breakAll) {
 
                 //nepřidávat na konec položky, které by byly až za pravým okrajem
-                if (!_this.options.clearLeft && _this.endItemPosWill + addedWidth >= _this._selfRect.right) {
+                if (!_this.options.clearLeft && _this.endItemPosWill + addedWidth > _this._selfRect.right) {
 
                     return;
                 }
@@ -1334,7 +1400,7 @@
             }
         });
 
-        if (this._shouldCancelRAF) {
+        if (this._shouldCancelRAF/* && !byFakeMove && !moved*/) {
 
             this._clearHideStates("start");
         }
@@ -1346,16 +1412,19 @@
 
             addedWidth = 0; //kolik px už bylo přidáno na začátek
 
+//        console.log("_moveRightItemsOverToTheStart");
+//        console.log(this.$rightItemsOver);
+
         this.$rightItemsOver.each(function () {
 
             var $this = $t(this),
 
-                width = /*Math.round*/($this.outerWidth());
+                width = ($this.outerWidth());
 
             if (!_this.options.breakAll) {
 
                 //nepřidávat na začátek položky, které byly až za levým okrajem
-                if (_this.startItemPosWill - 1 - addedWidth <= _this._selfRect.left) {
+                if (_this.startItemPosWill - addedWidth - 1 <= _this._selfRect.left) {
 
                     return;
                 }
@@ -1389,9 +1458,11 @@
 
         var $sibling = toPosition === "start" ? this.findNext($item) : this.findPrev($item),
 
-            width = toPosition === "start" ? /*Math.round*/($item.outerWidth()) : -/*Math.round*/($sibling.outerWidth()),
+            width = toPosition === "start" ? $item.outerWidth() : -$sibling.outerWidth(),
 
             left = parseFloat($sibling.data(DATA.willLeft + this.NS)) - width;
+
+        $item.attr("data-x", parseFloat($sibling.data(DATA.willLeft + this.NS)));
 
         if (!this.options.fade) {
 
@@ -1437,13 +1508,9 @@
 
                 CSS[TRANSFORM_PROP] = T3D ? "translate3d(" + value + "px, 0px, 0px)" : "translateX(" + value + "px)";
                 CSS[TRANSITION_PROP] = hardBreak || this.options.fade === true ? "" : "none";
-//
+
                 $item.data(DATA.translate + this.NS, value)
                     .css(CSS);
-
-//                $item.css({
-//                    left: parseFloat($item.data(DATA.willLeft + this.NS))
-//                });
 
                 $item.data(DATA.fakeTransitionTimeout + this.NS, null);
 
@@ -1493,6 +1560,9 @@
 
         var _this = this;
 
+//        console.log("_clearHideStates: " + position);
+//        console.log(position === "end" ? this.$rightItemsOver : this.$leftItemsOver);
+
         (position === "end" ? this.$rightItemsOver : this.$leftItemsOver).each(function () {
 
             var $this = $t(this);
@@ -1508,20 +1578,17 @@
             $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
 
             $this.removeClass(CLASS.hide)
-                .removeClass(position === "end" ? $this.hasClass(CLASS.toEnd) : $this.hasClass(CLASS.toStart));
+                .removeClass(position === "end" ? CLASS.toEnd : CLASS.toStart);
 
             $this.data(DATA.willLeft + _this.NS, $this.data(DATA.translate + _this.NS) + $this.data(DATA.offset + _this.NS));
-
-//            $this.data(DATA.willLeft + _this.NS, getTranslate($this).x + $this.data(DATA.offset + _this.NS));
-//            $this.data(DATA.willLeft + _this.NS, parseFloat($this.css("left")));
         });
     };
 
     Infinitum.prototype._animate = function () {
 
-        this._move(/*Math.round*/(getTranslate(this.$track).x) - this._lastTrackX, true);
+        this._move((getTranslate(this.$track).x) - this._lastTrackX, true);
 
-        this._lastTrackX = /*Math.round*/(getTranslate(this.$track).x);
+        this._lastTrackX = (getTranslate(this.$track).x);
     };
 
     /*
@@ -1553,6 +1620,7 @@
             this.$currentItem = $item;
 
             $item.addClass(CLASS.current);
+
         }
 
         if (noTrackMove) {
@@ -1570,8 +1638,6 @@
 
         var dataLeft = parseFloat($item.data(DATA.willLeft + this.NS)),
             cssLeft = $item.data(DATA.translate + this.NS) + $item.data(DATA.offset + this.NS),
-//            cssLeft = getTranslate($item).x + $item.data(DATA.offset + this.NS),
-//            cssLeft = parseFloat($item.css("left")),
 
             rect = this._getRect($item[0]),
 
@@ -1587,7 +1653,7 @@
 
                 var $prev = this.findPrev($item),
 
-                    prevWidth = /*Math.round*/($prev.outerWidth());
+                    prevWidth = ($prev.outerWidth());
 
                 this._setTrackPosition(willTranslate - prevWidth, true, speedByPointer);
 
@@ -1597,6 +1663,13 @@
             var itemPos = rect.left + (dataLeft - cssLeft) - this._selfRect.left;
 
             if (!itemPos) {
+
+                var currentItemIsNotFirst = this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current);
+
+                if (currentItemIsNotFirst) {
+
+                    this._fixItemsPositions();
+                }
 
                 return;
             }
@@ -1614,11 +1687,11 @@
     /*
      * clear - odstranit possibleCurrent stav (konec přesouvání)
      */
-    Infinitum.prototype._setPossibleCurrentItem = function (clear) {
+    Infinitum.prototype._setPossibleCurrentItem = function (clear, rewriteCurrent) {
 
         var $possible = this._findCurrentItem();
 
-        if ($possible[0] !== this._$possibleCurrent[0]) {
+        if ($possible[0] !== this._$possibleCurrent[0] && rewriteCurrent) {
 
             $possible.addClass(CLASS.possibleCurrent);
 
@@ -1633,25 +1706,19 @@
 
             this._$possibleCurrent.removeClass(CLASS.possibleCurrent);
 
-            this._setCurrent(this._$possibleCurrent);
+            if (rewriteCurrent) {
 
-            if (!this.options.wheelKeysTapSetCurrent) {
+                this._setCurrent(this._$possibleCurrent);
             }
         }
-
     };
 
     Infinitum.prototype._findCurrentItem = function () {
 
-        if (this._lastDir === Infinitum.DIR.LEFT || !this.options.clearLeft || this.options.breakAll) {
-
-            return this._findClosestItem();
-        }
-
-        return this.$willStartItem;
+        return this._findClosestItem(this._lastDir === Infinitum.DIR.LEFT ? "in" : "out");
     };
 
-    Infinitum.prototype._findClosestItem = function () {
+    Infinitum.prototype._findClosestItem = function (direction) {
 
         var closestLeftItemPos = null,
 
@@ -1663,8 +1730,6 @@
 
                 dataLeft = parseFloat($this.data(DATA.willLeft + this.NS)),
                 cssLeft = $this.data(DATA.translate + this.NS) + $this.data(DATA.offset + this.NS),
-//                cssLeft = getTranslate($this).x + $this.data(DATA.offset + this.NS),
-//                cssLeft = parseFloat($this.css("left")),
 
                 rect = this._getRect(item),
 
@@ -1674,7 +1739,7 @@
                 thisLeftItemPos = willLeft - this._selfRect.left,
                 thisRightItemPos = willRight - this._selfRect.left;
 
-            if (this._isCloser(closestLeftItemPos, thisLeftItemPos, thisRightItemPos)) {
+            if (this._isCloser(direction, closestLeftItemPos, thisLeftItemPos, thisRightItemPos)) {
 
                 closestLeftItemPos = thisLeftItemPos;
 
@@ -1686,9 +1751,9 @@
         return $(closestLeftItem);
     };
 
-    Infinitum.prototype._isCloser = function (prev, currentLeft, currentRight) {
+    Infinitum.prototype._isCloser = function (direction, prev, currentLeft, currentRight) {
 
-        switch (this.options.current) {
+        switch (this.options[direction === "in" ? "currentIn" : "currentOut"]) {
 
             case CURRENT.CLOSEST: return (prev === null || Math.abs(currentLeft) < Math.abs(prev));
 
@@ -1703,10 +1768,10 @@
         var rect = element.getBoundingClientRect();
 
         return {
-            left: /*Math.round*/(rect.left),
-            right: /*Math.round*/(rect.right),
-            width: /*Math.round*/(rect.width),
-            height: /*Math.round*/(rect.height)
+            left: (rect.left),
+            right: (rect.right),
+            width: (rect.width),
+            height: (rect.height)
         };
     };
 

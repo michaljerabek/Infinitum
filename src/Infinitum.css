@@ -1,14 +1,18 @@
 .infinitum__item {
-/*    position: relative;*/
+    position: relative;
 }
 
 .infinitum {
-/*    position: relative;*/
+    position: relative;
 
-/*    overflow: visible !important;*/
+    overflow: visible !important;
+
+    touch-action: manipulation;
 }
-/*
-
+.infinitum :after,
+.infinitum:after {
+    display: none !important;
+}
 .infinitum.infinitum:after {
     content: attr(data-x);
     font-size: 12px;
@@ -40,11 +44,28 @@
     right: 0;
 
     padding: 5px;
+    max-width: calc(100% - 10px);
 
     color: #fff;
     background-color: #000;
 }
-*/
+
+.infinitum__item:before {
+    content: attr(data-y);
+    font-size: 12px;
+    white-space: normal;
+    word-break: break-all;
+
+    position: absolute;
+    bottom: 0;
+    right: 0;
+
+    padding: 5px;
+    max-width: calc(100% - 10px);
+
+    color: #fff;
+    background-color: #000;
+}
 
 .infinitum__track {
     position: relative;
@@ -61,6 +82,8 @@
     -o-transition-timing-function: cubic-bezier(.35, .35, .35, 1);
     transition-timing-function: cubic-bezier(.35, .35, .35, 1);
     will-change: transform;
+
+    touch-action: manipulation;
 }
 
     .infinitum__item {
@@ -79,6 +102,8 @@
         -o-transition-duration: 0.4s;
         transition-duration: 0.4s;
         will-change: opacity;
+
+        touch-action: manipulation;
     }
 
     .infinitum__item--hide {

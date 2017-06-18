@@ -104,7 +104,7 @@
 
             padding: 10px 0;
 
-            overflow: hidden;
+/*            overflow: hidden;*/
         }
 
         .example7:before {
@@ -123,6 +123,8 @@
             background-image: linear-gradient(to right, transparent, #eee);
 
             pointer-events: none;
+
+            display: none;
         }
 
         .example7:after {
@@ -141,6 +143,12 @@
 
         .example7__item {
             outline: 1px solid lime;
+            outline-offset: -1px;
+        }
+
+        .example6__item {
+            outline: 1px solid deeppink;
+            outline-offset: -1px;
         }
 
         .example6__item span {
@@ -306,7 +314,7 @@
 
                     window.example3 = new Infinitum({
                         selector: ".example3",
-                        refreshItems: true
+                        breakAll: true
                     });
 
                 });
@@ -489,6 +497,8 @@
 
             </div>
 
+            <button onclick="example6._move(0,0,1)">fakemove</button>
+
             <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
                 /*global Infinitum, $*/
 
@@ -549,7 +559,8 @@
                         selector: ".example7",
 //                        fade: false,
                         leftBreak: Infinitum.POSITION.END,
-                        current: Infinitum.CURRENT.FULL,
+                        currentIn: Infinitum.CURRENT.FULL,
+                        currentOut: Infinitum.CURRENT.FULL,
                         fade: Infinitum.POSITION.START
                     });
 
