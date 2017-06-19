@@ -1171,12 +1171,12 @@
 
         if (x < 0 || ((animationDoneAndCurrentNotFirst || fakeMove) && this.options.clearLeft)) {
 
-                this._moveLeftItemsOverToTheEnd(animationDoneAndCurrentNotFirst, fakeMove, x || animationDoneAndCurrentNotFirst || fakeMove);
+            this._moveLeftItemsOverToTheEnd(animationDoneAndCurrentNotFirst, fakeMove, x || animationDoneAndCurrentNotFirst || fakeMove);
 
-            } else if (x > 0) {
+        } else if (x > 0) {
 
-                this._moveRightItemsOverToTheStart();
-            }
+            this._moveRightItemsOverToTheStart();
+        }
 //        }
 
         if (!fakeMove) {
@@ -1776,7 +1776,7 @@
 
             case CURRENT.FULL: return (currentLeft >= 0 && (prev === null || (Math.abs(currentLeft) < Math.abs(prev))));
 
-            case CURRENT.STILL_INSIDE: return (currentRight > 0 && (prev === null || (currentLeft < prev)));
+            case CURRENT.STILL_INSIDE: return (currentRight >= 1 && (prev === null || (currentLeft < prev)));
         }
     };
 
