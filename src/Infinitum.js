@@ -297,7 +297,7 @@
 
     Infinitum.FAKE_TRANSITION_TIMEOUT = 700;
 
-    Infinitum.CAPTURE_WHEEL_TIMEOUT = 300;
+    Infinitum.CAPTURE_WHEEL_TIMEOUT = 350;
     Infinitum.KEY_THROTTLE = 75;
     Infinitum.WHEEL_THROTTLE = 40;
 
@@ -333,21 +333,21 @@
 
         this.initialized = true;
 
-//        var _this = this;
-//
-//        function debug() {
-//
-//            _this.$items.each(function (i, item) {
-////                $t(item).attr("data-y", (_this._getRect(item).left.toFixed(2)));
+        var _this = this;
+
+        function debug() {
+
+            _this.$items.each(function (i, item) {
+//                $t(item).attr("data-y", (_this._getRect(item).left.toFixed(2)));
 //                $t(item).attr("data-y", $t(item).data(DATA.translate + _this.NS) + $t(item).data(DATA.offset + _this.NS));
-//            });
-//
-//            _this.$self.attr("data-x", _this._selfRect.left);
-//
-//            requestAnimationFrame(debug);
-//        }
-//
-//        requestAnimationFrame(debug);
+            });
+
+            _this.$self.attr("data-x", _this._selfRect.left);
+
+            requestAnimationFrame(debug);
+        }
+
+        requestAnimationFrame(debug);
     };
 
     Infinitum.prototype.destroy = function () {
@@ -358,14 +358,19 @@
         }
 
         this._shouldCancelRAF = true;
+        this._forceCancelRAF = true;
         cancelAnimationFrame(this._animate);
 
         this._destroyEvents();
 
         this.$self.removeClass(CLASS.self);
 
-        this.$track.css(TRANSFORM_PROP, "")
-            .css(TRANSITION_PROP + "Duration", "")
+        var trackCSS = {};
+
+        trackCSS[TRANSFORM_PROP] = "";
+        trackCSS[TRANSITION_PROP + "Duration"] = "";
+
+        this.$track.css(trackCSS)
             .off(this.NS, "")
             .removeClass(CLASS.track)
             .removeClass(CLASS.moving)
@@ -385,10 +390,11 @@
 
         }.bind(this));
 
-        this.$items.css({
-                position: "",
-                left: ""
-            })
+        var itemsCSS = {};
+
+        itemsCSS[TRANSFORM_PROP] = "";
+
+        this.$items.css(itemsCSS)
             .off(this.NS)
             .removeClass(CLASS.item)
             .removeClass(CLASS.current)
@@ -593,7 +599,7 @@
             $this.data(DATA.offset + this.NS, lastLeft);
             $this.data(DATA.willLeft + this.NS, lastLeft);
 
-            lastLeft += ($this.outerWidth());
+            lastLeft += $this.outerWidth();
 
         }.bind(this));
 
@@ -749,9 +755,7 @@
 
         this._fixVertical = null;
 
-        clearTimeout(this.$track.data(DATA.fakeTransitionTimeout + this.NS));
-        this.$track.off(TRANSITIONEND + this.NS)
-            .data(DATA.fakeTransitionTimeout, null);
+        this._clearTrackTransition();
 
         this._shouldCancelRAF = true;
 //        this._forceCancelRAF = true;
@@ -808,7 +812,7 @@
 
         if (diffX) {
 
-            this._forceCancelRAF = true;
+            this._forceCancelRAF = !this._trackMoved;
 
             this._move(diffX, false, false);
         }
@@ -852,6 +856,7 @@
 
              return this._onTap(event);
         }
+
         this._parking = true;
 
         this._setCurrent(this._findCurrentItem(), false, false, false, true);
@@ -896,9 +901,8 @@
 
         this._parking = false;
 
-        clearTimeout(this.$track.data(DATA.fakeTransitionTimeout + this.NS));
-        this.$track.off(TRANSITIONEND + this.NS)
-            .data(DATA.fakeTransitionTimeout, null);
+        this._clearTrackTransition();
+
         this._shouldCancelRAF = true;
 //        this._forceCancelRAF = true;
         cancelAnimationFrame(this._animate);
@@ -939,9 +943,8 @@
 
         this._parking = false;
 
-        clearTimeout(this.$track.data(DATA.fakeTransitionTimeout + this.NS));
-        this.$track.off(TRANSITIONEND + this.NS)
-            .data(DATA.fakeTransitionTimeout, null);
+        this._clearTrackTransition();
+
         this._shouldCancelRAF = true;
 //        this._forceCancelRAF = true;
         cancelAnimationFrame(this._animate);
@@ -988,16 +991,14 @@
 
     Infinitum.prototype._moveTrack = function (x, animate, speedByPointer) {
 
-        var value = (getTranslate(this.$track).x) + (x);
+        var value = getTranslate(this.$track).x + x;
 
         this._setTrackPosition(value, animate, speedByPointer);
     };
 
     Infinitum.prototype._setTrackPosition = function (position, animate, speedByPointer) {
 
-        clearTimeout(this.$track.data(DATA.fakeTransitionTimeout + this.NS));
-        this.$track.off(TRANSITIONEND + this.NS)
-            .data(DATA.fakeTransitionTimeout, null);
+        this._clearTrackTransition();
 
         this.$track.css(TRANSITION_PROP, animate ? "" : "none");
 
@@ -1017,11 +1018,9 @@
                         return;
                     }
 
-                    clearTimeout(fakeTransitionEnd);
+                    this._clearTrackTransition();
 
-                    this.$track.off(TRANSITIONEND + this.NS)
-                        .css(TRANSITION_PROP + "Duration", "")
-                        .data(DATA.fakeTransitionTimeout + this.NS, null);
+                    this.$track.css(TRANSITION_PROP + "Duration", "");
 
                     this._generateSelfRect();
 
@@ -1037,7 +1036,7 @@
             this.$track.data(DATA.fakeTransitionTimeout + this.NS, fakeTransitionEnd);
         }
 
-        this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + (position) + "px, 0px, 0px)" : "translateX(" + (position) + "px)");
+        this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + position + "px, 0px, 0px)" : "translateX(" + position + "px)");
 
         this.$track.data(DATA.willTranslate + this.NS, position);
 
@@ -1045,6 +1044,14 @@
 
             requestAnimationFrame(this._animate);
         }
+    };
+
+    Infinitum.prototype._clearTrackTransition = function () {
+
+        clearTimeout(this.$track.data(DATA.fakeTransitionTimeout + this.NS));
+
+        this.$track.off(TRANSITIONEND + this.NS)
+            .data(DATA.fakeTransitionTimeout, null);
     };
 
     Infinitum.prototype._setTrackSpeed = function (toPosition, usePointer) {
@@ -1150,7 +1157,7 @@
             this._moveTrack(x);
         }
 
-        this._sortItems();
+        this._sortItems(animation);
 
         var animationDone = animation && this._shouldCancelRAF && (!x || this._forceCancelRAF),
 
@@ -1227,7 +1234,7 @@
     /*
      * Najde položky, které přesahují okraje widgetu.
      */
-    Infinitum.prototype._sortItems = function () {
+    Infinitum.prototype._sortItems = function (animation) {
 
         this.startItemPosWill = null;
         this.endItemPosWill = null;
@@ -1246,7 +1253,7 @@
 
                 rect = this._getRect(item),
 
-                dataLeft = parseFloat($this.data(DATA.willLeft + this.NS)),
+                dataLeft = $this.data(DATA.willLeft + this.NS),
                 cssLeft = $this.data(DATA.translate + this.NS) + $this.data(DATA.offset + this.NS),
 
                 diff = dataLeft - cssLeft;
@@ -1274,6 +1281,16 @@
             var breakEdge = this._getBreakEdge(rect);
 
             if (breakEdge.left < this._selfRect.left) {
+
+                //uživatel pustil track (animation === true);
+                //kvůli odlišnému nastavení current a break může dojít k přeskočení položky na druhou stranu (a změní se na chvíli possibleCurrent)
+                // -> zařadit do inside
+                if (animation && item === this._$possibleCurrent[0]) {
+
+                    this.$insideItems.push(item);
+
+                    return;
+                }
 
                 leftItemsOver.push(item);
 
@@ -1460,9 +1477,7 @@
 
             width = toPosition === "start" ? $item.outerWidth() : -$sibling.outerWidth(),
 
-            left = parseFloat($sibling.data(DATA.willLeft + this.NS)) - width;
-
-        $item.attr("data-x", parseFloat($sibling.data(DATA.willLeft + this.NS)));
+            left = $sibling.data(DATA.willLeft + this.NS) - width;
 
         if (!this.options.fade) {
 
@@ -1504,7 +1519,7 @@
 
                 var CSS = {},
 
-                    value = parseFloat($item.data(DATA.willLeft + this.NS)) - $item.data(DATA.offset + this.NS);
+                    value = $item.data(DATA.willLeft + this.NS) - $item.data(DATA.offset + this.NS);
 
                 CSS[TRANSFORM_PROP] = T3D ? "translate3d(" + value + "px, 0px, 0px)" : "translateX(" + value + "px)";
                 CSS[TRANSITION_PROP] = hardBreak || this.options.fade === true ? "" : "none";
@@ -1586,9 +1601,9 @@
 
     Infinitum.prototype._animate = function () {
 
-        this._move((getTranslate(this.$track).x) - this._lastTrackX, true);
+        this._move(getTranslate(this.$track).x - this._lastTrackX, true);
 
-        this._lastTrackX = (getTranslate(this.$track).x);
+        this._lastTrackX = getTranslate(this.$track).x;
     };
 
     /*
@@ -1636,7 +1651,7 @@
      */
     Infinitum.prototype._moveToItem = function ($item, reverse, oneItemMode, speedByPointer) {
 
-        var dataLeft = parseFloat($item.data(DATA.willLeft + this.NS)),
+        var dataLeft = $item.data(DATA.willLeft + this.NS),
             cssLeft = $item.data(DATA.translate + this.NS) + $item.data(DATA.offset + this.NS),
 
             rect = this._getRect($item[0]),
@@ -1710,6 +1725,8 @@
 
                 this._setCurrent(this._$possibleCurrent);
             }
+
+            return;
         }
     };
 
@@ -1728,7 +1745,7 @@
 
             var $this = $t(item),
 
-                dataLeft = parseFloat($this.data(DATA.willLeft + this.NS)),
+                dataLeft = $this.data(DATA.willLeft + this.NS),
                 cssLeft = $this.data(DATA.translate + this.NS) + $this.data(DATA.offset + this.NS),
 
                 rect = this._getRect(item),
@@ -1759,19 +1776,20 @@
 
             case CURRENT.FULL: return (currentLeft >= 0 && (prev === null || (Math.abs(currentLeft) < Math.abs(prev))));
 
-            case CURRENT.STILL_INSIDE: return (currentRight >= 0 && (prev === null || (currentLeft < prev)));
+            case CURRENT.STILL_INSIDE: return (currentRight > 0 && (prev === null || (currentLeft < prev)));
         }
     };
 
+    //Potřebuju tohle, když se to už nezaokrouhluje? (Např. kůvli možnosti přepsání...)
     Infinitum.prototype._getRect = function (element) {
 
         var rect = element.getBoundingClientRect();
 
         return {
-            left: (rect.left),
-            right: (rect.right),
-            width: (rect.width),
-            height: (rect.height)
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            height: rect.height
         };
     };
 

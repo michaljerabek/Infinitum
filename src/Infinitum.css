@@ -11,7 +11,7 @@
 }
 .infinitum :after,
 .infinitum:after {
-    display: none !important;
+/*    display: none !important;*/
 }
 .infinitum.infinitum:after {
     content: attr(data-x);
@@ -91,7 +91,7 @@
 
         -webkit-transition-property: opacity, color, background, filter;
         -moz-transition-property: opacity, color, background, filter;
-        -o-transition-property: opacity, color, background, filter;
+        -o-transition-property: opacity, color, background;
         transition-property: opacity, color, background, filter;
         -webkit-transition-timing-function: ease-out;
         -moz-transition-timing-function: ease-out;
