@@ -83,7 +83,7 @@
     transition-timing-function: cubic-bezier(.35, .35, .35, 1);
     will-change: transform;
 
-    touch-action: manipulation;
+    pointer-events: none;
 }
 
     .infinitum__item {
@@ -104,6 +104,7 @@
         will-change: opacity;
 
         touch-action: manipulation;
+        pointer-events: auto;
     }
 
     .infinitum__item--hide {

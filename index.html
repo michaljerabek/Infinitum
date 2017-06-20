@@ -53,6 +53,7 @@
         .example6 {
             font-size: 0;
             white-space: nowrap;
+/*            direction: rtl;*/
 
             margin-bottom: 32px;
 
@@ -72,6 +73,8 @@
         .example5__item,
         .example7__item,
         .example6__item {
+/*            direction: ltr;*/
+
             display: inline-block;
         }
 
@@ -100,6 +103,7 @@
         }
 
         .example7 {
+/*            direction: rtl; */
             position: relative;
 
             padding: 10px 0;
@@ -142,6 +146,8 @@
         }
 
         .example7__item {
+/*            direction: ltr;*/
+
             outline: 1px solid lime;
             outline-offset: -1px;
         }
@@ -280,7 +286,8 @@
                 $(function () {
 
                     window.example2 = new Infinitum({
-                        selector: ".example2"
+                        selector: ".example2",
+                        mode: Infinitum.POSITION.END
                     });
 
                 });
@@ -384,7 +391,8 @@
                 $(function () {
 
                     window.example4 = new Infinitum({
-                        selector: ".example4"
+                        selector: ".example4",
+                        mode: Infinitum.POSITION.END
                     });
 
                 });
@@ -507,7 +515,11 @@
                     window.example6 = new Infinitum({
                         selector: ".example6",
                         breakAll: true,
-                        clearLeft: false
+                        clearEdge: false,
+                        currentIn: Infinitum.CURRENT.FULL,
+                        currentOut: Infinitum.CURRENT.STILL_INSIDE,
+                        mode: Infinitum.POSITION.END,
+                        reverseItems: true
                     });
 
                 });
