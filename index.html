@@ -50,6 +50,7 @@
         .example4,
         .example5,
         .example7,
+        .example8,
         .example6 {
             font-size: 0;
             white-space: nowrap;
@@ -72,6 +73,7 @@
         .example4__item,
         .example5__item,
         .example7__item,
+        .example8__item,
         .example6__item {
 /*            direction: ltr;*/
 
@@ -83,6 +85,7 @@
         .example2__item,
         .example3__item,
         .example7__item,
+        .example8__item,
         .example6__item {
             font-size: 32px;
 
@@ -95,6 +98,7 @@
             overflow-y: hidden;
         }
 
+        .example8__item,
         .example7__item,
         .example6__item {
             text-align: center;
@@ -102,6 +106,7 @@
 	        width: 44px;
         }
 
+        .example8,
         .example7 {
 /*            direction: rtl; */
             position: relative;
@@ -152,13 +157,21 @@
             outline-offset: -1px;
         }
 
+        .example8__item {
+/*            direction: ltr;*/
+
+            outline: 1px solid gold;
+            outline-offset: -1px;
+        }
+
         .example6__item {
             outline: 1px solid deeppink;
             outline-offset: -1px;
         }
 
-        .example6__item span {
         .example7__item span,
+        .example8__item span,
+        .example6__item span {
             transform: scale(1);
 
             display: inline-block;
@@ -170,7 +183,9 @@
         .example6__item.infinitum__item--possible-current span,
         .example6__item.infinitum__item--current span,
         .example7__item.infinitum__item--possible-current span,
-        .example7__item.infinitum__item--current span {
+        .example7__item.infinitum__item--current span,
+        .example8__item.infinitum__item--possible-current span,
+        .example8__item.infinitum__item--current span {
             transform: scale(1.75);
 
             display: inline-block;
@@ -514,10 +529,10 @@
 
                     window.example6 = new Infinitum({
                         selector: ".example6",
-                        breakAll: true,
+//                        breakAll: true,
                         clearEdge: false,
-                        currentIn: Infinitum.CURRENT.FULL,
-                        currentOut: Infinitum.CURRENT.STILL_INSIDE,
+//                        currentIn: Infinitum.CURRENT.FULL,
+//                        currentOut: Infinitum.CURRENT.STILL_INSIDE,
                         mode: Infinitum.POSITION.END,
                         reverseItems: true
                     });
@@ -571,8 +586,8 @@
                         selector: ".example7",
 //                        fade: false,
                         leftBreak: Infinitum.POSITION.END,
-                        currentIn: Infinitum.CURRENT.FULL,
-                        currentOut: Infinitum.CURRENT.FULL,
+//                        currentIn: Infinitum.CURRENT.FULL,
+//                        currentOut: Infinitum.CURRENT.FULL,
                         fade: Infinitum.POSITION.START
                     });
 
@@ -581,6 +596,44 @@
             </script>
 
             <!--–––––––– // EXAMPLE7 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE8 ** –––––––––-->
+
+            <h2>Example 8</h2>
+
+            <div class="example8">
+
+                <div class="example8__wrapper">
+
+                    <div class="example8__item" style="width: 100px;"><span>1</span></div>
+                    <div class="example8__item" style="width: 30px;"><span>2</span></div>
+                    <div class="example8__item" style="width: 80px;"><span>3</span></div>
+                    <div class="example8__item" style="width: 40px;"><span>4</span></div>
+                    <div class="example8__item" style="width: 70px;"><span>5</span></div>
+                    <div class="example8__item" style="width: 90px;"><span>6</span></div>
+                    <div class="example8__item" style="width: 30px;"><span>7</span></div>
+                    <div class="example8__item" style="width: 80px;"><span>8</span></div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example8 = new Infinitum({
+                        selector: ".example8",
+                        mode: Infinitum.POSITION.CENTER
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE8 // –––––––––-->
 
 
         </div>

@@ -1,5 +1,5 @@
 /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
-/*global jQuery, requestAnimationFrame, cancelAnimationFrame*/
+/*global jQuery, requestAnimationFrame, cancelAnimationFrame, HTMLElement*/
 
 (function ($) {
 
@@ -212,6 +212,8 @@
          *     - .CLOSEST - nejbližší (podle mode)
          *     - .STILL_INSIDE - jakákliv část je uvnitř (podle mode)
          *     - .FULL - celá položka je uvnitř (podle mode)
+         * pokud je mode: Infinitum.POSITION.CENTER, výchozí je Infinitum.CURRENT.CLOSEST
+         * a ostatní hodnoty znamenají, že current je položka, ve které se nachází střed
          */
         currentIn: CURRENT.CLOSEST,
 
@@ -219,6 +221,8 @@
          *     - .CLOSEST - nejbližší (podle mode)
          *     - .STILL_INSIDE - jakákliv část je uvnitř (podle mode)
          *     - .FULL - celá položka je uvnitř (podle mode)
+         * pokud je mode: Infinitum.POSITION.CENTER, výchozí je Infinitum.CURRENT.CLOSEST
+         * a ostatní hodnoty znamenají, že current je položka, ve které se nachází střed
          */
         currentOut: CURRENT.STILL_INSIDE,
 
@@ -249,6 +253,7 @@
          */
         breakOnEdge: false,
 
+        balanced: false,
 
         /* Boolean - při softRefresh (např. při resize) přepsat i pozice položek
          * Pokud se nikdy nemění velikost položek, to není nutné.
@@ -318,6 +323,10 @@
 
         options = options || this.options || {};
 
+        options.mode = "center";
+        options.balanced = true;
+        options.clearEdge = false;
+
         var _DEFAULTS = null;
 
         if (options.fade === false) {
@@ -326,6 +335,21 @@
 
             _DEFAULTS.leftBreak = Infinitum.POSITION.END;
             _DEFAULTS.rightBreak = Infinitum.POSITION.START;
+        }
+
+        if (options.mode === POSITION.CENTER) {
+
+            _DEFAULTS = _DEFAULTS || $.extend({}, DEFAULTS);
+
+            _DEFAULTS.leftBreak = Infinitum.POSITION.END;
+            _DEFAULTS.rightBreak = Infinitum.POSITION.START;
+
+            _DEFAULTS.currentIn = Infinitum.CURRENT.CLOSEST;
+            _DEFAULTS.currentOut = Infinitum.CURRENT.CLOSEST;
+
+            _DEFAULTS.clearEdge = false;
+
+            _DEFAULTS.balanced = true;
         }
 
         if (options.mode === POSITION.END) {
@@ -352,15 +376,15 @@
         this.initialized = true;
 
 //        var _this = this;
-
+//
 //        function debug() {
 //
 //            _this.$items.each(function (i, item) {
-////                $t(item).attr("data-x", (_this._getRect(item).left + _this._getRect(item).width));
+//                $t(item).attr("data-x", _this._getRect(item)[_this._isReverseDirection() ? "right" : "left"]);
 ////                $t(item).attr("data-y", $t(item).data(DATA.translate + _this.NS) + $t(item).data(DATA.offset + _this.NS));
 //            });
 //
-//            _this.$self.attr("data-x", _this._selfRect.right);
+//            _this.$self.attr("data-x", (_this._selfRect.left + ((_this._selfRect.right - _this._selfRect.left) / 2)));
 //
 //            requestAnimationFrame(debug);
 //        }
@@ -454,11 +478,16 @@
 
             this._prepareItems(true);
 
-//            var currentData = this.$currentItem.data();
-//            this._setTrackPosition(currentData[DATA.translate + this.NS] - currentData[DATA.offset + this.NS]);
-
             //simulováním pohybu (třetí param. fakeMove) se položky zařadí na správné pozice
-            this._move(this._lastDir === Infinitum.DIR.LEFT ? -1 : 1, true, true);
+
+            if (this.options.mode === POSITION.CENTER) {
+
+                this._move(0, true, true);
+
+            } else {
+
+                this._move(this._lastDir !== Infinitum.DIR.LEFT ? -1 : 1, true, true);
+            }
         }
 
         this.refreshing = false;
@@ -578,8 +607,9 @@
 
         var box = this.$self.css(["padding-left", "padding-right", "border-left-width", "border-right-width"]);
 
-        this._selfRect.left = (this._origSelfRect.left) + parseFloat(box["padding-left"]) + parseFloat(box["border-left-width"]);
-        this._selfRect.right = (this._origSelfRect.right) - parseFloat(box["padding-right"]) - parseFloat(box["border-right-width"]);
+        this._selfRect.left = this._origSelfRect.left + parseFloat(box["padding-left"]) + parseFloat(box["border-left-width"]);
+        this._selfRect.right = this._origSelfRect.right - parseFloat(box["padding-right"]) - parseFloat(box["border-right-width"]);
+        this._selfRect.center = this._origSelfRect.left + ((this._origSelfRect.right - this._origSelfRect.left) / 2);
     };
 
     Infinitum.prototype._prepareTrack = function () {
@@ -620,7 +650,9 @@
             this._reverseItems();
         }
 
-        var lastLeft = 0;
+        var lastLeft = 0,
+
+            totalWidth = 0;
 
         //zařadit položky za sebe a nastavit absolutní pozicování (přejít na transform?)
         this.$items.each(function (i, item) {
@@ -638,6 +670,7 @@
             $this.data(DATA.willLeft + this.NS, lastLeft);
 
             lastLeft += $this.outerWidth();
+            totalWidth = lastLeft;
 
         }.bind(this));
 
@@ -659,6 +692,29 @@
         } else if (this.options.mode === POSITION.END) {
 
             this._setCurrent(this.$items.last(), false, false, false, false, true);
+
+        } else {
+
+            var middle = 0,
+
+                center = totalWidth / 2;
+
+            this.$items.each(function (i, item) {
+
+                var $this = $t(item),
+
+                    left = $this.data(DATA.willLeft + this.NS),
+                    right = left + $this.outerWidth();
+
+                if (left <= center && right >= center) {
+
+                    middle = i;
+
+                    return false;
+                }
+            }.bind(this));
+
+            this._setCurrent(this.$items.eq(middle), false, false, false, false, true);
         }
 
         this._$possibleCurrent = this.$currentItem;
@@ -894,8 +950,6 @@
 
     Infinitum.prototype._onPointerEnd = function (event) {
 
-//        console.clear();
-
         if ((this._byMouse && event.button !== 0) || !this._hasPointer) {
 
             return;
@@ -933,6 +987,11 @@
 
                 return;
             }
+
+            var currentPos = this._getRect(this.$currentItem[0]).left,
+                tappedPos = this._getRect($item[0]).left;
+
+            this._lastDir = currentPos > tappedPos ? Infinitum.DIR.RIGHT : Infinitum.DIR.LEFT;
 
             if (this.options.wheelKeysTapSetCurrent) {
 
@@ -1198,13 +1257,13 @@
      * fakeMove se používá při resetování, aby se položky správně vyrovnaly.
      * V takovém případě by x mělo být 0 a animation false.
      */
-    Infinitum.prototype._move = function (x, animation, fakeMove) {
+    Infinitum.prototype._move = function (x, animation, fakeMove, fix) {
 
         clearTimeout(this._fixItemsPositionsTimeout);
 
         this.$track.addClass(CLASS.moving);
 
-        this._setFadeSpeed(x, fakeMove);
+        this._setFadeSpeed(x, fakeMove && !fix);
 
         if (!animation && !fakeMove) {
 
@@ -1215,12 +1274,9 @@
 
         var animationDone = animation && this._shouldCancelRAF && (!x || this._forceCancelRAF),
 
-            $edgeItem = this.options.mode === POSITION.START ? this.$willStartItem : this.$willEndItem,
+            $edgeItem = this.options.mode === POSITION.END ? this.$willEndItem : this.$willStartItem,
 
             animationDoneAndCurrentNotOnEdge = animationDone && $edgeItem.length && !$edgeItem.hasClass(CLASS.current);
-
-//        console.log("_move");
-//                console.log(animation, animationDone, animationDoneAndCurrentNotOnEdge, x, fakeMove, this._shouldCancelRAF, this._forceCancelRAF);
 
         if (this.options.mode === POSITION.START) {
 
@@ -1243,6 +1299,16 @@
 
                 this._moveLeftItemsOverToTheEnd(animationDone);
             }
+        } else {
+
+            if (x < 0) {
+
+                this._moveLeftItemsOverToTheEnd(animationDone);
+
+            } else if (x > 0 || fakeMove) {
+
+                this._moveRightItemsOverToTheStart(animationDone);
+            }
         }
 
         if (!fakeMove) {
@@ -1259,7 +1325,7 @@
 
         if (animationDone) {
 
-            if (!fakeMove && animationDoneAndCurrentNotOnEdge) {
+            if (!fakeMove && animationDoneAndCurrentNotOnEdge && this.options.mode !== POSITION.CENTER) {
 
                 this._fixItemsPositions();
             }
@@ -1293,7 +1359,7 @@
 
             this._forceCancelRAF = true;
 
-            this._move(this._lastDir === Infinitum.DIR.LEFT ? -1 : 1, true, true);
+            this._move(this._lastDir === Infinitum.DIR.LEFT ? -1 : 1, true, true, true);
         }
     };
 
@@ -1302,18 +1368,118 @@
      */
     Infinitum.prototype._sortItems = function (animation) {
 
-        this.startItemPosWill = null;
-        this.endItemPosWill = null;
-        this.endItemWidthWill = null;
+        var items = this._getItemsData(animation);
 
-        var leftItemsOver = [],
-            rightItemsOver = [],
-            willStartItem = null,
-            willEndItem = null,
-            willStartItemRect = null,
-            willEndItemRect = null;
+        this.startItemPosWill = items.startPosWill;
+        this.endItemPosWill = items.endPosWill;
+        this.endItemWidthWill = items.endWidthWill;
 
-        this.$insideItems = $([]);
+        this.$insideItems = $(items.inside);
+
+        this.$willStartItem = this.$willStartItem && this.$willStartItem[0] === items.willStart ? this.$willStartItem : $(items.willStart);
+        this.$willEndItem = this.$willEndItem && this.$willEndItem[0] === items.willEnd ? this.$willEndItem : $(items.willEnd);
+
+        this._setItemsOverInCorrectOrder(items);
+
+        this._setItemOverIfNotBreakOnEdge(items);
+    };
+
+    Infinitum.prototype._setItemsOverInCorrectOrder = function (items) {
+
+        if (items.leftOver.length > 1) {
+
+            this.$leftItemsOver = $(items.leftOver.sort(function (a, b) {
+
+                return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+            }));
+
+        } else {
+
+            this.$leftItemsOver = $(items.leftOver);
+        }
+
+        if (items.rightOver.length > 1) {
+
+            this.$rightItemsOver = $(items.rightOver.sort(function (a, b) {
+
+                return b.getBoundingClientRect().left - a.getBoundingClientRect().left;
+            }));
+
+        } else {
+
+            this.$rightItemsOver = $(items.rightOver);
+        }
+    };
+
+    Infinitum.prototype._setItemOverIfNotBreakOnEdge = function (items) {
+
+        if (this.$items.length === 1 && this.options.mode === POSITION.CENTER) {
+
+            return;
+        }
+
+        if (this.options.mode === POSITION.START || (this.options.mode === POSITION.CENTER && this._isReverseDirection())) {
+
+            //na kraji je místo, ale na opačné straně poslední element není na kraji -> zalomit (když breakOnEdge === true)
+            if (!this.options.breakOnEdge && !this.$leftItemsOver.length && !this.$rightItemsOver.length && items.willStartRect.left > this._selfRect.left) {
+
+                if (this.options.balanced) {
+
+                    var ifMovedFromRightLeftFromCenter = Math.abs(-this._selfRect.center + (items.willStartRect.left - items.willEndRect.width)),
+                        ifMovedFromRightRightFromCenter = Math.abs(-this._selfRect.center + items.willEndRect.right);
+
+                    if (ifMovedFromRightLeftFromCenter <= ifMovedFromRightRightFromCenter) {
+
+                        this.$rightItemsOver = this.$willEndItem;
+                    }
+
+                    return;
+                }
+
+                this.$rightItemsOver = this.$willEndItem;
+            }
+
+            return;
+        }
+
+        if (this.options.mode === POSITION.END || (this.options.mode === POSITION.CENTER && !this._isReverseDirection())) {
+
+            //na kraji je místo, ale na opačné straně poslední element není na kraji -> zalomit (když breakOnEdge === true)
+            if (!this.options.breakOnEdge && !this.$leftItemsOver.length && !this.$rightItemsOver.length && items.willEndRect.right < this._selfRect.right) {
+
+                if (this.options.balanced) {
+
+                    var ifMovedFromLeftLeftFromCenter = Math.abs(-this._selfRect.center + items.willStartRect.left),
+                        ifMovedFromLeftRightFromCenter = Math.abs(-this._selfRect.center + (items.willEndRect.right + items.willEndRect.width));
+
+                    if (ifMovedFromLeftRightFromCenter <= ifMovedFromLeftLeftFromCenter) {
+
+                        this.$leftItemsOver = this.$willStartItem;
+                    }
+
+                    return;
+                }
+
+                this.$leftItemsOver = this.$willStartItem;
+            }
+
+            return;
+        }
+    };
+
+    Infinitum.prototype._getItemsData = function (animation) {
+
+        var leftOver = [],
+            rightOver = [],
+            inside = [],
+            willStart = null,
+            willEnd = null,
+            willStartRect = null,
+            willEndRect = null,
+
+            startPosWill = null,
+            endPosWill = null,
+            endWidthWill = null;
 
         this.$items.each(function (i, item) {
 
@@ -1326,112 +1492,90 @@
 
                 diff = dataLeft - cssLeft;
 
-            if (this.startItemPosWill === null || this.startItemPosWill > rect.left + diff) {
+            if (startPosWill === null || startPosWill > rect.left + diff) {
 
-                this.startItemPosWill = rect.left + diff;
+                startPosWill = rect.left + diff;
 
-                willStartItem = item;
+                willStart = item;
 
-                willStartItemRect = {
+                willStartRect = {
                     left: rect.left + diff,
                     right: rect.right + diff,
                     width: rect.width
                 };
             }
 
-            if (this.endItemPosWill === null || this.endItemPosWill < rect.right + diff) {
+            if (endPosWill === null || endPosWill < rect.right + diff) {
 
-                this.endItemPosWill = rect.right + diff;
-                this.endItemWidthWill = rect.width;
+                endPosWill = rect.right + diff;
+                endWidthWill = rect.width;
 
-                willEndItem = item;
+                willEnd = item;
 
-                willEndItemRect = {
+                willEndRect = {
                     left: rect.left + diff,
                     right: rect.right + diff,
                     width: rect.width
                 };
+            }
+
+            //uživatel pustil track (animation === true);
+            //kvůli odlišnému nastavení current a break může dojít k přeskočení položky na druhou stranu (a změní se na chvíli possibleCurrent)
+            // -> zařadit do inside
+            if (animation && item === this._$possibleCurrent[0]) {
+
+                inside.push(item);
+
+                return;
+            }
+
+            if (this.options.mode === POSITION.CENTER && this.options.balanced && !this.options.breakOnEdge) {
+
+                if (rect.left + diff <= this._selfRect.center && rect.right + diff >= this._selfRect.center) {
+
+                    inside.push(item);
+
+                } else if (rect.left + diff <= this._selfRect.center) {
+
+                    leftOver.push(item);
+
+                } else {
+
+                    rightOver.push(item);
+                }
+
+                return;
             }
 
             var breakEdge = this._getBreakEdge(rect);
 
             if (breakEdge.left < this._selfRect.left) {
 
-                //uživatel pustil track (animation === true);
-                //kvůli odlišnému nastavení current a break může dojít k přeskočení položky na druhou stranu (a změní se na chvíli possibleCurrent)
-                // -> zařadit do inside
-                if (animation && item === this._$possibleCurrent[0]) {
-
-                    this.$insideItems.push(item);
-
-                    return;
-                }
-
-                leftItemsOver.push(item);
+                leftOver.push(item);
 
             } else if (breakEdge.right > this._selfRect.right) {
 
-                //uživatel pustil track (animation === true);
-                //kvůli odlišnému nastavení current a break může dojít k přeskočení položky na druhou stranu (a změní se na chvíli possibleCurrent)
-                // -> zařadit do inside
-                if (animation && item === this._$possibleCurrent[0]) {
-
-                    this.$insideItems.push(item);
-
-                    return;
-                }
-
-                rightItemsOver.push(item);
+                rightOver.push(item);
 
             } else {
 
-                this.$insideItems.push(item);
+                inside.push(item);
             }
 
         }.bind(this));
 
-        this.$willStartItem = this.$willStartItem && this.$willStartItem[0] === willStartItem ? this.$willStartItem : $(willStartItem);
-        this.$willEndItem = this.$willEndItem && this.$willEndItem[0] === willEndItem ? this.$willEndItem : $(willEndItem);
-
-        if (leftItemsOver.length > 1) {
-
-            this.$leftItemsOver = $(leftItemsOver.sort(function (a, b) {
-
-                return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
-            }));
-
-        } else {
-
-            this.$leftItemsOver = $(leftItemsOver);
-        }
-
-        if (rightItemsOver.length > 1) {
-
-            this.$rightItemsOver = $(rightItemsOver.sort(function (a, b) {
-
-                return b.getBoundingClientRect().left - a.getBoundingClientRect().left;
-            }));
-
-        } else {
-
-            this.$rightItemsOver = $(rightItemsOver);
-        }
-
-        if (this.options.mode === POSITION.START) {
-
-            //na kraji je místo, ale na opačné straně poslední element není na kraji -> zalomit (když breakOnEdge === true)
-            if (!this.options.breakOnEdge && !this.$leftItemsOver.length && !this.$rightItemsOver.length && willStartItemRect.left > this._selfRect.left) {
-
-                this.$rightItemsOver = this.$willEndItem;
-            }
-        } else if (this.options.mode === POSITION.END) {
-
-            //na kraji je místo, ale na opačné straně poslední element není na kraji -> zalomit (když breakOnEdge === true)
-            if (!this.options.breakOnEdge && !this.$leftItemsOver.length && !this.$rightItemsOver.length && willEndItemRect.right < this._selfRect.right) {
-
-                this.$leftItemsOver = this.$willStartItem;
-            }
-        }
+        return {
+            leftOver: leftOver,
+            rightOver: rightOver,
+            inside: inside,
+            willStart: willStart,
+            willEnd: willEnd,
+            willStartRect: willStartRect,
+            willEndRect: willEndRect,
+            startPosWill: startPosWill,
+            endPosWill: endPosWill,
+            endWidthWill: endWidthWill
+        };
     };
 
     Infinitum.prototype._getBreakEdge = function (itemRect) {
@@ -1443,13 +1587,13 @@
 
             case Infinitum.POSITION.CENTER:
 
-                leftBreakEdge = leftBreakEdge + (itemRect.width / 2);
+                leftBreakEdge = itemRect.left + (itemRect.width / 2);
 
                 break;
 
             case Infinitum.POSITION.END:
 
-                leftBreakEdge = rightBreakEdge;
+                leftBreakEdge = itemRect.right - 1;
 
                 break;
         }
@@ -1458,13 +1602,13 @@
 
             case Infinitum.POSITION.START:
 
-                rightBreakEdge = leftBreakEdge;
+                rightBreakEdge = itemRect.left;
 
                 break;
 
             case Infinitum.POSITION.CENTER:
 
-                rightBreakEdge = rightBreakEdge - (itemRect.width / 2);
+                rightBreakEdge = itemRect.right - 1 - (itemRect.width / 2);
 
                 break;
         }
@@ -1488,27 +1632,40 @@
 
             var $this = $t(this),
 
-                width = ($this.outerWidth());
+                width = $this.outerWidth();
 
-            if (_this.options.mode === POSITION.START) {
+            if (_this.options.balanced && (_this.options === POSITION.CENTER || (!animationDone || !byFakeMove || !_this.options.clearEdge))) {
 
-                if (!_this.options.breakAll) {
+                var ifMovedFromLeftLeftFromCenter = Math.abs(-_this._selfRect.center + (_this.startItemPosWill + addedWidth)),
+                    ifMovedFromLeftRightFromCenter = Math.abs(-_this._selfRect.center + (_this.endItemPosWill + addedWidth + width));
 
-                    //nepřidávat na konec položky, které by byly až za pravým okrajem
-                    if (!_this.options.clearEdge && _this.endItemPosWill + addedWidth > _this._selfRect.right) {
+                if (ifMovedFromLeftRightFromCenter >= ifMovedFromLeftLeftFromCenter/* && _this.endItemPosWill > _this._selfRect.right*/) {
 
-                        return;
-                    }
+                    return false;
                 }
 
-            } else if (_this.options.mode === POSITION.END) {
+            } else {
 
-                if (!_this.options.breakAll) {
+                if (_this.options.mode === POSITION.START || _this.options.mode === POSITION.CENTER) {
 
-                    //nepřidávat na konec položky, které by byly až za pravým okrajem
-                    if (_this.endItemPosWill + addedWidth >= _this._selfRect.right) {
+                    if (!_this.options.breakAll) {
 
-                        return;
+                        //nepřidávat na konec položky, které by byly až za pravým okrajem
+                        if (!_this.options.clearEdge && _this.endItemPosWill + addedWidth >= _this._selfRect.right) {
+
+                            return;
+                        }
+                    }
+
+                } else if (_this.options.mode === POSITION.END) {
+
+                    if (!_this.options.breakAll) {
+
+                        //nepřidávat na konec položky, které by byly až za pravým okrajem
+                        if (_this.endItemPosWill + addedWidth >= _this._selfRect.right) {
+
+                            return;
+                        }
                     }
                 }
             }
@@ -1545,30 +1702,44 @@
 
             var $this = $t(this),
 
-                width = ($this.outerWidth());
+                width = $this.outerWidth();
 
-            if (_this.options.mode === POSITION.START) {
+            if (_this.options.balanced && (_this.options === POSITION.CENTER || (!animationDone || !byFakeMove || !_this.options.clearEdge))) {
 
-                if (!_this.options.breakAll) {
+                var ifMovedFromRightLeftFromCenter = Math.abs(-_this._selfRect.center + (_this.startItemPosWill - addedWidth - width)),
+                    ifMovedFromRightRightFromCenter = Math.abs(-_this._selfRect.center + (_this.endItemPosWill - addedWidth));
 
-                    //nepřidávat na začátek položky, které byly až za levým okrajem
-                    if (_this.startItemPosWill - addedWidth - 1 <= _this._selfRect.left) {
+                if (ifMovedFromRightLeftFromCenter >= ifMovedFromRightRightFromCenter /*&& _this.startItemPosWill <= _this._selfRect.left*/) {
 
-                        return;
-                    }
+                    return false;
                 }
 
-            } else if (_this.options.mode === POSITION.END) {
+            } else {
 
-                if (!_this.options.breakAll) {
+                if (_this.options.mode === POSITION.START || _this.options.mode === POSITION.CENTER) {
 
-                    //nepřidávat na začátek položky, které byly až za levým okrajem
-                    if (!_this.options.clearEdge && _this.startItemPosWill - addedWidth <= _this._selfRect.left) {
+                    if (!_this.options.breakAll) {
 
-                        return;
+                        //nepřidávat na začátek položky, které byly až za levým okrajem
+                        if (_this.startItemPosWill - addedWidth - 1 <= _this._selfRect.left) {
+
+                            return;
+                        }
+                    }
+
+                } else if (_this.options.mode === POSITION.END) {
+
+                    if (!_this.options.breakAll) {
+
+                        //nepřidávat na začátek položky, které byly až za levým okrajem
+                        if (!_this.options.clearEdge && _this.startItemPosWill - addedWidth <= _this._selfRect.left) {
+
+                            return;
+                        }
                     }
                 }
             }
+
 
             if (animationDoneAndCurrentNotLast && ($this.hasClass(CLASS.current) || (!_this.options.clearEdge && !byFakeMove))) {
 
@@ -1786,7 +1957,67 @@
         } else if (this.options.mode === POSITION.END) {
 
             this._moveToItemModeEnd($item, reverse, oneItemMode, speedByPointer, jumpToPosition);
+
+        } else {
+
+            this._moveToItemModeCenter($item, reverse, oneItemMode, speedByPointer, jumpToPosition);
         }
+    };
+
+    Infinitum.prototype._moveToItemModeCenter = function ($item, reverse, oneItemMode, speedByPointer, jumpToPosition) {
+
+        var dataLeft = $item.data(DATA.willLeft + this.NS),
+            cssLeft = $item.data(DATA.translate + this.NS) + $item.data(DATA.offset + this.NS),
+
+            rect = this._getRect($item[0]),
+
+            willTranslate;
+
+        if (jumpToPosition) {
+
+            this._shouldCancelRAF = true;
+            this._forceCancelRAF = true;
+        }
+
+        //přesouvá se pouze na vedlejší položku, takže nepotřebujeme přesnou pozici,
+        //pokud by se použila, tak by při rychlé sekvenci posouvání mohlo dojít ke skoku opačným směrem
+        if (oneItemMode) {
+
+            if (this.$items.length === 1) {
+
+                return;
+            }
+
+            willTranslate = this.$track.data(DATA.willTranslate + this.NS);
+
+            if (this._isReverseDirection()) {
+
+                var $next = this.findNext($item),
+
+                    nextWidth = $next.outerWidth();
+
+                this._setTrackPosition(willTranslate + (rect.width / 2) + (nextWidth / 2), !jumpToPosition, speedByPointer);
+
+                return;
+            }
+
+            var $prev = this.findPrev($item),
+
+                prevWidth = $prev.outerWidth();
+
+            this._setTrackPosition(willTranslate - (rect.width / 2) - (prevWidth / 2), !jumpToPosition, speedByPointer);
+
+            return;
+        }
+
+        var itemPos = rect.left + (dataLeft - cssLeft) - this._selfRect.left - ((this._selfRect.right - this._selfRect.left) / 2) + (rect.width / 2);
+
+        if (!itemPos) {
+
+            return;
+        }
+
+        this._moveTrack(-itemPos, !jumpToPosition, speedByPointer);
     };
 
     Infinitum.prototype._moveToItemModeEnd = function ($item, reverse, oneItemMode, speedByPointer, jumpToPosition) {
@@ -1807,6 +2038,11 @@
         //přesouvá se pouze na vedlejší položku, takže nepotřebujeme přesnou pozici,
         //pokud by se použila, tak by při rychlé sekvenci posouvání mohlo dojít ke skoku opačným směrem
         if (oneItemMode) {
+
+            if (this.$items.length === 1) {
+
+                return;
+            }
 
             willTranslate = this.$track.data(DATA.willTranslate + this.NS);
 
@@ -1859,6 +2095,11 @@
         }
 
         if (oneItemMode) {
+
+            if (this.$items.length === 1) {
+
+                return;
+            }
 
             willTranslate = this.$track.data(DATA.willTranslate + this.NS);
 
@@ -1935,7 +2176,9 @@
 
         var closestItemPos = null,
 
-            closestItem;
+            closestItem,
+
+            option = direction === "in" ? "currentIn" : "currentOut";
 
         this.$items.each(function (i, item) {
 
@@ -1949,12 +2192,46 @@
                 willLeft = rect.left + (dataLeft - cssLeft),
                 willRight = rect.right + (dataLeft - cssLeft),
 
-                thisLeftItemPos = willLeft - this._selfRect[this.options.mode === POSITION.END ? "right" : "left"],
+                thisLeftItemPos,
+                thisRightItemPos;
+
+            if (this.options.mode === POSITION.CENTER && this.options[option] !== CURRENT.CLOSEST) {
+
+                if (this._isCenter(willLeft, willRight)) {
+
+                    closestItem = item;
+
+                    return false;
+                }
+
+                return;
+            }
+
+            if (this.options.mode === POSITION.CENTER && (this.options[option] === CURRENT.CLOSEST)) {
+
+                thisLeftItemPos = willLeft - this._selfRect.center + 1;
+                thisRightItemPos = willRight - this._selfRect.center - 1;
+
+            } else {
+
+                thisLeftItemPos = willLeft - this._selfRect[this.options.mode === POSITION.END ? "right" : "left"];
                 thisRightItemPos = willRight - this._selfRect[this.options.mode === POSITION.END ? "right" : "left"];
+            }
 
             if (this._isCloser(direction, closestItemPos, thisLeftItemPos, thisRightItemPos)) {
 
-                closestItemPos = this.options.mode === POSITION.END ? thisRightItemPos : thisLeftItemPos;
+                if (this.options.mode === POSITION.CENTER && this.options[option] === CURRENT.CLOSEST && direction === "in") {
+
+                    closestItemPos = thisLeftItemPos;
+
+                } else if (this.options.mode === POSITION.CENTER && this.options[option] === CURRENT.CLOSEST && direction === "out") {
+
+                    closestItemPos = thisRightItemPos;
+
+                } else {
+
+                    closestItemPos = this.options.mode === POSITION.END ? thisRightItemPos : thisLeftItemPos;
+                }
 
                 closestItem = item;
             }
@@ -1962,6 +2239,11 @@
         }.bind(this));
 
         return $(closestItem);
+    };
+
+    Infinitum.prototype._isCenter = function (currentLeft, currentRight) {
+
+        return currentLeft <= this._selfRect.center && currentRight >= this._selfRect.center;
     };
 
     Infinitum.prototype._isCloser = function (direction, prev, currentLeft, currentRight) {
@@ -1989,20 +2271,27 @@
 
                 case CURRENT.STILL_INSIDE: return (currentLeft <= -1 && (prev === null || (currentRight > prev)));
             }
+
+        } else {
+
+            if (this.options[option] === CURRENT.CLOSEST) {
+
+                switch (direction) {
+
+                    case "in": return (prev === null || Math.abs(currentLeft) < Math.abs(prev));
+
+                    case "out": return (prev === null || Math.abs(currentRight) < Math.abs(prev));
+                }
+            }
+
+            return (prev === null || Math.abs(currentLeft) < Math.abs(prev));
         }
     };
 
     //Potřebuju tohle, když se to už nezaokrouhluje? (Např. kvůli možnosti přepsání...)
     Infinitum.prototype._getRect = function (element) {
 
-        var rect = element.getBoundingClientRect();
-
-        return {
-            left: rect.left,
-            right: rect.right,
-            width: rect.width,
-            height: rect.height
-        };
+        return (element instanceof HTMLElement ? element : element[0]).getBoundingClientRect();
     };
 
 }(jQuery));

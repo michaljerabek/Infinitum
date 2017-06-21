@@ -9,10 +9,28 @@
 
     touch-action: manipulation;
 }
+
+.infinitum:before {
+    content: "";
+
+    z-index: 10;
+    position: absolute;
+    top: -5px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 2px;
+    height: 10px;
+
+    background-color: gold;
+}
+
 .infinitum :after,
 .infinitum:after {
-/*    display: none !important;*/
+    display: none !important;
 }
+
 .infinitum.infinitum:after {
     content: attr(data-x);
     font-size: 12px;
@@ -77,10 +95,10 @@
     -moz-transition: transform 0.5s ease-out;
     -o-transition: transform 0.5s ease-out;
     transition: transform 0.5s ease-out;
-    -webkit-transition-timing-function: cubic-bezier(.35, .35, .35, 1);
-    -moz-transition-timing-function: cubic-bezier(.35, .35, .35, 1);
-    -o-transition-timing-function: cubic-bezier(.35, .35, .35, 1);
-    transition-timing-function: cubic-bezier(.35, .35, .35, 1);
+    -webkit-transition-timing-function: cubic-bezier(.25, .35, .35, 1);
+    -moz-transition-timing-function: cubic-bezier(.25, .35, .35, 1);
+    -o-transition-timing-function: cubic-bezier(.25, .35, .35, 1);
+    transition-timing-function: cubic-bezier(.25, .35, .35, 1);
     will-change: transform;
 
     pointer-events: none;
