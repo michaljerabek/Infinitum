@@ -124,10 +124,16 @@
 
     $win = $(window);
 
-    var NS = "Infinitum";
+    var NS = "Infinitum",
+
+        PROJECT_URL = "https://github.com/michaljerabek/infinitum";
 
     var CLASS = {
         self: "infinitum",
+        start: "infinitum--start",
+        end: "infinitum--end",
+        center: "infinitum--center",
+        debug: "infinitum--debug",
 
         item: "infinitum__item",
         current: "infinitum__item--current",
@@ -155,7 +161,9 @@
         translate: "translate",
         offset: "offset",
 
-        fakeTransitionTimeout: "fakeTransitionTimeout"
+        fakeTransitionTimeout: "fakeTransitionTimeout",
+
+        url: "infinitum-url"
     };
 
     var POSITION = {
@@ -193,7 +201,7 @@
         reverseItems: false,
 
 
-        /* Infinitum.POSITION - Zarovnání aktivní položky
+        /* Infinitum.POSITION - Zarovnání aktivní (current) položky
          *     - .CENTER | .START | .END
          */
         mode: POSITION.START,
@@ -253,18 +261,29 @@
          */
         breakOnEdge: false,
 
+        /* Boolean - vyvažovat přesahující položky
+         * pokud je mode Infinitum.POSITION.CENTER, výchozí je true
+         */
         balanced: false,
 
         /* Boolean - při softRefresh (např. při resize) přepsat i pozice položek
          * Pokud se nikdy nemění velikost položek, to není nutné.
          */
-        refreshItems: true
+        refreshItems: true,
+
+        debug: false
     };
 
 
-    var idCounter = 1;
+    var hasPointer = [],
+
+        instances = [],
+
+        idCounter = 1;
 
     var Infinitum = window.Infinitum = function Infinitum(options) {
+
+        instances.push(this);
 
         this.id = NS + idCounter++;
         this.NS = "." + this.id;
@@ -323,10 +342,6 @@
 
         options = options || this.options || {};
 
-        options.mode = "center";
-        options.balanced = true;
-        options.clearEdge = false;
-
         var _DEFAULTS = null;
 
         if (options.fade === false) {
@@ -375,21 +390,26 @@
 
         this.initialized = true;
 
-//        var _this = this;
+        if (this.options.debug) {
+
+            this.$self.addClass(CLASS.debug);
+
+//            var _this = this;
 //
-//        function debug() {
+//            var debug = function () {
 //
-//            _this.$items.each(function (i, item) {
-//                $t(item).attr("data-x", _this._getRect(item)[_this._isReverseDirection() ? "right" : "left"]);
-////                $t(item).attr("data-y", $t(item).data(DATA.translate + _this.NS) + $t(item).data(DATA.offset + _this.NS));
-//            });
+//                _this.$items.each(function (i, item) {
 //
-//            _this.$self.attr("data-x", (_this._selfRect.left + ((_this._selfRect.right - _this._selfRect.left) / 2)));
+//                    $t(item).attr("data-debug", _this._getRect(item)[_this._isReverseDirection() ? "right" : "left"]);
+//                });
+//
+//                _this.$self.attr("data-debug", (_this._selfRect.left + ((_this._selfRect.right - _this._selfRect.left) / 2)));
+//
+//                requestAnimationFrame(debug);
+//            };
 //
 //            requestAnimationFrame(debug);
-//        }
-//
-//        requestAnimationFrame(debug);
+        }
     };
 
     Infinitum.prototype.destroy = function () {
@@ -399,13 +419,19 @@
             return;
         }
 
+        instances.splice(instances.indexOf(this), 1);
+
         this._shouldCancelRAF = true;
         this._forceCancelRAF = true;
         cancelAnimationFrame(this._animate);
 
         this._destroyEvents();
 
-        this.$self.removeClass(CLASS.self);
+        this.$self.removeAttr("data-" + DATA.url)
+            .removeClass(CLASS.self)
+            .removeClass(this.options.mode === POSITION.START ? CLASS.start :
+                this.options.mode === POSITION.END ? CLASS.end : CLASS.center)
+            .removeClass(CLASS.debug);
 
         var trackCSS = {};
 
@@ -482,7 +508,8 @@
 
             if (this.options.mode === POSITION.CENTER) {
 
-                this._move(0, true, true);
+                this._move(1, false, true);
+                this._move(-1, false, true);
 
             } else {
 
@@ -595,6 +622,9 @@
 
         this.$self = $(this.options.selector)
             .attr("tabindex", 0)
+            .attr("data-" + DATA.url, PROJECT_URL)
+            .addClass(this.options.mode === POSITION.START ? CLASS.start :
+                this.options.mode === POSITION.END ? CLASS.end : CLASS.center)
             .addClass(CLASS.self);
 
         this._generateSelfRect();
@@ -722,6 +752,17 @@
 
     Infinitum.prototype._initEvents = function () {
 
+        if (instances.length === 1) {
+
+            $win.on("touchstart." + NS, function (event) {
+
+                if (hasPointer.length && hasPointer.length !== event.originalEvent.touches.length) {
+
+                    event.preventDefault();
+                }
+            });
+        }
+
         this.$self.on("mousedown" + this.NS + " touchstart" + this.NS, this._onPointerStart.bind(this));
 
         this.$self.on("click" + this.NS, CLASS.selector("item"), function (event) {
@@ -823,10 +864,15 @@
         this.$self.off(this.NS);
 
         $win.on(this.NS);
+
+        if (!instances.length) {
+
+            $win.off("touchstart." + NS);
+        }
     };
 
     Infinitum.prototype._onPointerStart = function (event) {
-        console.clear();
+
         if (this.frozen) {
 
             return;
@@ -848,6 +894,8 @@
 
         this._hasPointer = true;
         this._pointerIndex = 0;
+
+        hasPointer.push(this);
 
         if (this._byTouch) {
 
@@ -908,6 +956,11 @@
 
         if (this._fixVertical) {
 
+            if (hasPointer.indexOf(this) !== -1) {
+
+                hasPointer.splice(hasPointer.indexOf(this), 1);
+            }
+
             return;
         }
 
@@ -957,6 +1010,11 @@
 
         this._hasPointer = false;
         this._forceCancelRAF = false;
+
+        if (hasPointer.indexOf(this) !== -1) {
+
+            hasPointer.splice(hasPointer.indexOf(this), 1);
+        }
 
         $win.off("mousemove" + this.NS);
         this.$self.off("touchmove" + this.NS);
@@ -1167,6 +1225,15 @@
             .data(DATA.fakeTransitionTimeout, null);
     };
 
+    Infinitum.prototype._getAvgSpeed = function () {
+
+        return this._speed.reduce(function (acc, current) {
+
+            return acc + current;
+
+        }, 0) / this._speed.length;
+    };
+
     Infinitum.prototype._setTrackSpeed = function (toPosition, usePointer) {
 
         var fromPosition = getTranslate(this.$track).x,
@@ -1177,11 +1244,7 @@
 
         if (usePointer) {
 
-            var avgSpeed = this._speed.reduce(function (acc, current) {
-
-                return acc + current;
-
-            }, 0) / this._speed.length;
+            var avgSpeed = this._getAvgSpeed();
 
             k = k / Math.max(1, Math.log(avgSpeed / 3));
 
@@ -1201,6 +1264,11 @@
 
         if (noFade) {
 
+            if (this.$track.hasClass(CLASS.speed0)) {
+
+                return;
+            }
+
             this.$track
                 .removeClass(CLASS.speed1)
                 .removeClass(CLASS.speed2)
@@ -1217,13 +1285,14 @@
             this._speed.unshift(Math.abs(move));
         }
 
-        var avgSpeed = this._speed.reduce(function (acc, current) {
-
-            return acc + current;
-
-        }, 0) / this._speed.length;
+        var avgSpeed = this._getAvgSpeed();
 
         if (avgSpeed < 10) {
+
+            if (this.$track.hasClass(CLASS.speed1)) {
+
+                return;
+            }
 
             this.$track
                 .removeClass(CLASS.speed0)
@@ -1233,6 +1302,11 @@
 
         } else if (avgSpeed < 20) {
 
+            if (this.$track.hasClass(CLASS.speed2)) {
+
+                return;
+            }
+
             this.$track
                 .removeClass(CLASS.speed0)
                 .removeClass(CLASS.speed1)
@@ -1240,6 +1314,11 @@
                 .addClass(CLASS.speed2);
 
         } else {
+
+            if (this.$track.hasClass(CLASS.speed3)) {
+
+                return;
+            }
 
             this.$track
                 .removeClass(CLASS.speed0)
@@ -1625,9 +1704,6 @@
 
             addedWidth = 0; //kolik px už bylo přidáno na konec
 
-//        console.log("_moveLeftItemsOverToTheEnd");
-//        console.log(this.$leftItemsOver);
-
         this.$leftItemsOver.each(function () {
 
             var $this = $t(this),
@@ -1639,7 +1715,7 @@
                 var ifMovedFromLeftLeftFromCenter = Math.abs(-_this._selfRect.center + (_this.startItemPosWill + addedWidth)),
                     ifMovedFromLeftRightFromCenter = Math.abs(-_this._selfRect.center + (_this.endItemPosWill + addedWidth + width));
 
-                if (ifMovedFromLeftRightFromCenter >= ifMovedFromLeftLeftFromCenter/* && _this.endItemPosWill > _this._selfRect.right*/) {
+                if (ifMovedFromLeftRightFromCenter >= ifMovedFromLeftLeftFromCenter) {
 
                     return false;
                 }
@@ -1695,9 +1771,6 @@
 
             addedWidth = 0; //kolik px už bylo přidáno na začátek
 
-//        console.log("_moveRightItemsOverToTheStart");
-//        console.log(this.$rightItemsOver);
-
         this.$rightItemsOver.each(function () {
 
             var $this = $t(this),
@@ -1709,7 +1782,7 @@
                 var ifMovedFromRightLeftFromCenter = Math.abs(-_this._selfRect.center + (_this.startItemPosWill - addedWidth - width)),
                     ifMovedFromRightRightFromCenter = Math.abs(-_this._selfRect.center + (_this.endItemPosWill - addedWidth));
 
-                if (ifMovedFromRightLeftFromCenter >= ifMovedFromRightRightFromCenter /*&& _this.startItemPosWill <= _this._selfRect.left*/) {
+                if (ifMovedFromRightLeftFromCenter >= ifMovedFromRightRightFromCenter) {
 
                     return false;
                 }
@@ -1739,7 +1812,6 @@
                     }
                 }
             }
-
 
             if (animationDoneAndCurrentNotLast && ($this.hasClass(CLASS.current) || (!_this.options.clearEdge && !byFakeMove))) {
 
@@ -1874,9 +1946,6 @@
 
         var _this = this;
 
-//        console.log("_clearHideStates: " + position);
-//        console.log(position === "end" ? this.$rightItemsOver : this.$leftItemsOver);
-
         (position === "end" ? this.$rightItemsOver : this.$leftItemsOver).each(function () {
 
             var $this = $t(this);
@@ -1950,17 +2019,19 @@
      */
     Infinitum.prototype._moveToItem = function ($item, reverse, oneItemMode, speedByPointer, jumpToPosition) {
 
-        if (this.options.mode === POSITION.START) {
+        switch (this.options.mode) {
 
-            this._moveToItemModeStart($item, reverse, oneItemMode, speedByPointer, jumpToPosition);
+            case POSITION.START:
 
-        } else if (this.options.mode === POSITION.END) {
+                return this._moveToItemModeStart($item, reverse, oneItemMode, speedByPointer, jumpToPosition);
 
-            this._moveToItemModeEnd($item, reverse, oneItemMode, speedByPointer, jumpToPosition);
+            case POSITION.END:
 
-        } else {
+                return this._moveToItemModeEnd($item, reverse, oneItemMode, speedByPointer, jumpToPosition);
 
-            this._moveToItemModeCenter($item, reverse, oneItemMode, speedByPointer, jumpToPosition);
+            case POSITION.CENTER:
+
+                return this._moveToItemModeCenter($item, reverse, oneItemMode, speedByPointer, jumpToPosition);
         }
     };
 
@@ -2207,7 +2278,7 @@
                 return;
             }
 
-            if (this.options.mode === POSITION.CENTER && (this.options[option] === CURRENT.CLOSEST)) {
+            if (this.options.mode === POSITION.CENTER && this.options[option] === CURRENT.CLOSEST) {
 
                 thisLeftItemPos = willLeft - this._selfRect.center + 1;
                 thisRightItemPos = willRight - this._selfRect.center - 1;
@@ -2220,13 +2291,9 @@
 
             if (this._isCloser(direction, closestItemPos, thisLeftItemPos, thisRightItemPos)) {
 
-                if (this.options.mode === POSITION.CENTER && this.options[option] === CURRENT.CLOSEST && direction === "in") {
+                if (this.options.mode === POSITION.CENTER && this.options[option] === CURRENT.CLOSEST) {
 
-                    closestItemPos = thisLeftItemPos;
-
-                } else if (this.options.mode === POSITION.CENTER && this.options[option] === CURRENT.CLOSEST && direction === "out") {
-
-                    closestItemPos = thisRightItemPos;
+                    closestItemPos = direction === "in" ? thisLeftItemPos : thisRightItemPos;
 
                 } else {
 

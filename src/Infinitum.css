@@ -1,88 +1,5 @@
-.infinitum__item {
-    position: relative;
-}
-
 .infinitum {
-    position: relative;
-
-    overflow: visible !important;
-
     touch-action: manipulation;
-}
-
-.infinitum:before {
-    content: "";
-
-    z-index: 10;
-    position: absolute;
-    top: -5px;
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    width: 2px;
-    height: 10px;
-
-    background-color: gold;
-}
-
-.infinitum :after,
-.infinitum:after {
-    display: none !important;
-}
-
-.infinitum.infinitum:after {
-    content: attr(data-x);
-    font-size: 12px;
-    white-space: normal;
-    word-break: break-all;
-
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    top: auto;
-    right: auto;
-
-    width: auto;
-    height: auto;
-    padding: 5px;
-
-    color: #fff;
-    background: darkslategray;
-}
-
-.infinitum__item:after {
-    content: attr(data-x);
-    font-size: 12px;
-    white-space: normal;
-    word-break: break-all;
-
-    position: absolute;
-    top: 0;
-    right: 0;
-
-    padding: 5px;
-    max-width: calc(100% - 10px);
-
-    color: #fff;
-    background-color: #000;
-}
-
-.infinitum__item:before {
-    content: attr(data-y);
-    font-size: 12px;
-    white-space: normal;
-    word-break: break-all;
-
-    position: absolute;
-    bottom: 0;
-    right: 0;
-
-    padding: 5px;
-    max-width: calc(100% - 10px);
-
-    color: #fff;
-    background-color: #000;
 }
 
 .infinitum__track {
@@ -206,6 +123,64 @@
         filter: sepia(1);
     }
 
+/*---------------------------- DEBUG ----------------------------*/
+
+.infinitum--debug {
+    overflow: visible !important;
+}
+
+.infinitum--debug,
+.infinitum--debug .infinitum__track,
+.infinitum--debug .infinitum__item {
+    position: relative;
+}
+
+.infinitum--debug:after,
+.infinitum--debug .infinitum__track:after,
+.infinitum--debug .infinitum__item:after {
+    content: attr(data-debug);
+    font-size: 12px;
+    white-space: normal;
+    word-break: break-all;
+
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    top: auto;
+    right: auto;
+
+    margin-bottom: 5px;
+    margin-top: 5px;
+    margin-left: 5px;
+
+    color: #fff;
+    background: #000;
+    box-shadow: 5px 5px 0px 0px #000,
+        -5px -5px 0px 0px #000,
+        -5px 5px 0px 0px #000,
+        5px -5px 0px 0px #000;
+}
+
+.infinitum--debug .infinitum__item:after {
+    bottom: 0%;
+}
+
+.infinitum--debug .infinitum__item:before {
+    content: "";
+
+    z-index: 98;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+
+    border: 1px solid #000;
+    outline: 1px solid #fff;
+    outline-offset: -2px;
+}
 
 
 
