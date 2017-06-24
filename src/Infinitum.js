@@ -320,6 +320,8 @@
         tap: "tap",
         key: "key",
         scroll: "scroll",
+        dragging: "dragging",
+        dragend: "dragend",
         change: "change",
         possibleChange: "possiblechange"
     };
@@ -957,6 +959,7 @@
 
         this._hasPointer = true;
         this._pointerIndex = 0;
+        this._draggingPrevented = false;
 
         hasPointer.push(this);
 
@@ -1037,6 +1040,22 @@
                 this.$track.addClass(CLASS.dragging);
             }
 
+            var draggingEvent = $.extend({}, $.Event(), {
+                type: Infinitum.EVENT.dragging,
+                target: this.$self[0],
+                originalEvent: event.originalEvent,
+                infinitum: this
+            });
+
+            this.$self.trigger(draggingEvent, this);
+
+            if (draggingEvent.isDefaultPrevented()) {
+
+                this._draggingPrevented = true;
+
+                return;
+            }
+
             this._forceCancelRAF = !this._trackMoved;
 
             this._move(diffX, false, false);
@@ -1090,16 +1109,32 @@
         $win.off("mousemove" + this.NS);
         this.$self.off("touchmove" + this.NS);
 
-        if (!this._trackMoved && this._fixVertical === null) {
+        if (!this._trackMoved && this._fixVertical === null && !this._draggingPrevented) {
 
              return this._onTap(event);
         }
+
+        this._draggingPrevented = false;
 
         this._setCurrent(this._findCurrentItem(), false, false, true);
 
         this.$track.removeClass(CLASS.dragging);
 
+        var dragendEvent = $.extend({}, $.Event(), {
+            type: Infinitum.EVENT.dragend,
+            target: this.$self[0],
+            originalEvent: event.originalEvent,
+            infinitum: this
+        });
+
+        this.$self.trigger(dragendEvent, this);
+
         this._trackMoved = false;
+
+        if (dragendEvent.isDefaultPrevented()) {//???
+
+            return;
+        }
 
         event.preventDefault();
     };
@@ -1224,10 +1259,11 @@
             target: $toItem[0],
             fromElement: this.$currentItem[0],
             toElement: $toItem[0],
-            originalEvent: event ? event.originalEvent : null
+            originalEvent: event ? event.originalEvent : null,
+            infinitum: this
         }, moreData || null);
 
-        this.$self.trigger(eventObj);
+        this.$self.trigger(eventObj, this);
 
         return eventObj;
     };

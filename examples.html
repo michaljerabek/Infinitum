@@ -36,7 +36,7 @@
 
             <section class="example1 examples__example">
 
-                <h2 class="example__title">Example 1 — Basic Tab Navigation</h2>
+                <h2 class="example__title">Example 1 — Tab Navigation (left mode)</h2>
 
                 <div class="example1__infinitum">
 
@@ -655,17 +655,47 @@ example2.on("change", function (event) {
             color: #444;
         }</pre>
 
-                <pre class="example__code example__js">var example3 = new Infinitum(".example3__infinitum");
+                <pre class="example__code example__js">var example3 = new Infinitum({
+    selector: ".example3__infinitum",
+    mode: Infinitum.POSITION.END,
+    current: 0 //current item will be the first element (.example3__item)
+});
 
-var $tabs = $(".example3__tab");
+var $tabsWrapper = $(".example3__tabs"),
+    $tabs = $tabsWrapper.find(".example3__tab");
 
-example3.on("change", function (event) {
+example3.on("change possiblechange", function (event, infinitum) {
+
+    //do not change tabs when "possiblechange" is not called by dragging the track
+    if (event.type === "possiblechange" &amp;&amp; !infinitum.dragging()) {
+
+        return;
+    }
 
     var $item = $(event.target);
 
     $tabs.removeClass("example3__tab--active")
         .eq($item.index())
         .addClass("example3__tab--active");
+});
+
+var lastEvent = Date.now();
+
+//speed up tab switching when scrolling, dragging or keys are used
+example3.on("scroll key tap dragging dragend", function (event) {
+
+    if (event.type === "tap" || event.type === "dragend" || Date.now() - lastEvent &gt; 500) {
+
+        $tabsWrapper.removeClass("speed-up");
+
+        lastEvent = Date.now();
+
+        return;
+    }
+
+    $tabsWrapper.addClass("speed-up");
+
+    lastEvent = Date.now();
 });</pre>
 
             </section>
@@ -683,20 +713,14 @@ example3.on("change", function (event) {
                     });
 
                     var $tabsWrapper = $(".example3__tabs"),
-                        $tabs = $(".example3__tab");
+                        $tabs = $tabsWrapper.find(".example3__tab");
 
-                    example3.on("change possiblechange", function (event) {
+                    example3.on("change possiblechange", function (event, infinitum) {
 
-                        if (event.type === "possiblechange") {
+                        //do not change tabs when "possiblechange" is not called by dragging the track
+                        if (event.type === "possiblechange" && !infinitum.dragging()) {
 
-                            //do not change tabs when "possiblechange" is not called by dragging the track
-                            if (!example3.dragging()) {
-
-                                return;
-                            }
-
-                            //speed up tab switching when dragging
-                            $tabsWrapper.addClass("speed-up");
+                            return;
                         }
 
                         var $item = $(event.target);
@@ -708,10 +732,10 @@ example3.on("change", function (event) {
 
                     var lastEvent = Date.now();
 
-                    //speed up tab switching when scrolling or keys are used
-                    example3.on("scroll key tap", function (event) {
+                    //speed up tab switching when scrolling, dragging or keys are used
+                    example3.on("scroll key tap dragging dragend", function (event) {
 
-                        if (event.type === "tap" || Date.now() - lastEvent > 500) {
+                        if (event.type === "tap" || event.type === "dragend" || Date.now() - lastEvent > 500) {
 
                             $tabsWrapper.removeClass("speed-up");
 
