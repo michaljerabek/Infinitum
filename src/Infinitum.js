@@ -1074,7 +1074,7 @@
 
     Infinitum.prototype._onPointerEnd = function (event) {
 
-        if ((this._byMouse && event.button !== 0) || !this._hasPointer) {
+        if ((this._byMouse && event.button !== 0) || (!this._hasPointer && event.type !== "click")) {
 
             return;
         }

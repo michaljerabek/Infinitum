@@ -16,6 +16,7 @@
     <!--JAVASCRIPT-->
     <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="src/Infinitum.js"></script>
+    <script src="jquery.filterizr.min.js"></script>
 
 </head>
 <body>
@@ -25,6 +26,8 @@
     <article class="examples">
 
         <h1 class="examples__title">Infinitum — Examples</h1>
+
+        <p class="examples__description">Infinite loop of HTML elements. Designed primarily for tab-like navigations.</p>
 
         <div class="examples__wrapper">
 
@@ -224,9 +227,7 @@
             color: #444;
         }</pre>
 
-                <pre class="example__code example__js">var example1 = new Infinitum({
-    selector: ".example1__infinitum"
-});
+                <pre class="example__code example__js">var example1 = new Infinitum(".example1__infinitum");
 
 var $tabs = $(".example1__tab");
 
@@ -264,6 +265,199 @@ example1.on("change", function (event) {
             </script>
 
             <!--–––––––– // EXAMPLE1 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE2 ** –––––––––-->
+
+            <section class="example2 examples__example">
+
+                <h2 class="example__title">Example 2 — Filter (center mode)</h2>
+
+                <p class="example__description">This example is using <a href="http://yiotis.net/filterizr/">Filterizr</a>.</p>
+
+                <div class="example2__infinitum">
+
+                    <ul class="example2__track">
+
+                        <li class="example2__item" data-category="all">
+                            <a class="example2__filter-title" href="#">All</a>
+                        </li>
+                        <li class="example2__item" data-category="1">
+                            <a class="example2__filter-title" href="#">Animals</a>
+                        </li>
+                        <li class="example2__item" data-category="2">
+                            <a class="example2__filter-title" href="#">Cities</a>
+                        </li>
+                        <li class="example2__item" data-category="3">
+                            <a class="example2__filter-title" href="#">Nature</a>
+                        </li>
+                        <li class="example2__item" data-category="4">
+                            <a class="example2__filter-title" href="#">Food</a>
+                        </li>
+                        <li class="example2__item" data-category="5">
+                            <a class="example2__filter-title" href="#">Sports</a>
+                        </li>
+                        <li class="example2__item" data-category="6">
+                            <a class="example2__filter-title" href="#">Transport</a>
+                        </li>
+
+                    </ul>
+                    <!-- /.example2__track -->
+
+                </div>
+                <!-- /.example2__infinitum -->
+
+                <div class="example2__images">
+
+                    <div class="example2__image filtr-item" data-category="2">
+                        <img src="http://lorempixel.com/512/512/city/4/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="1">
+                        <img src="http://lorempixel.com/512/512/animals/3/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="2">
+                        <img src="http://lorempixel.com/512/512/city/7/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="4">
+                        <img src="http://lorempixel.com/512/512/food/9/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="2">
+                        <img src="http://lorempixel.com/512/512/city/9/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="4">
+                        <img src="http://lorempixel.com/512/512/food/3/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="1">
+                        <img src="http://lorempixel.com/512/512/animals/1/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="5">
+                        <img src="http://lorempixel.com/512/512/sports/1/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="3">
+                        <img src="http://lorempixel.com/512/512/nature/2/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="4">
+                        <img src="http://lorempixel.com/512/512/food/1/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="3">
+                        <img src="http://lorempixel.com/512/512/nature/4/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="1">
+                        <img src="http://lorempixel.com/512/512/animals/2/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="4">
+                        <img src="http://lorempixel.com/512/512/food/4/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="1">
+                        <img src="http://lorempixel.com/512/512/animals/4/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="5">
+                        <img src="http://lorempixel.com/512/512/sports/6/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="3">
+                        <img src="http://lorempixel.com/512/512/nature/8/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="4">
+                        <img src="http://lorempixel.com/512/512/food/2/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+                    <div class="example2__image filtr-item" data-category="6">
+                        <img src="http://lorempixel.com/512/512/transport/4/" alt="" class="example2__img" width="256" height="256">
+                    </div>
+
+                </div>
+                <!-- /.example2__images -->
+
+                <pre class="example__code example__html">&lt;div class&equals;&quot;example2&lowbar;&lowbar;infinitum&quot;&gt;
+    &lt;ul class&equals;&quot;example2&lowbar;&lowbar;track&quot;&gt;
+        &lt;li class&equals;&quot;example2&lowbar;&lowbar;item&quot; data-category&equals;&quot;all&quot;&gt;
+            &lt;a class&equals;&quot;example2&lowbar;&lowbar;filter-title&quot; href&equals;&quot;&num;&quot;&gt;All&lt;&sol;a&gt;
+        &lt;&sol;li&gt;
+        &hellip;
+    &lt;&sol;ul&gt;
+&lt;&sol;div&gt;
+
+&lt;ul class&equals;&quot;example2&lowbar;&lowbar;tabs&quot;&gt;
+    &lt;li class&equals;&quot;example2&lowbar;&lowbar;tab example2&lowbar;&lowbar;tab--active&quot;&gt;
+        &lt;img src&equals;&quot;http&colon;&sol;&sol;lorempixel&period;com&sol;512&sol;512&sol;animals&sol;10&sol;&quot; alt&equals;&quot;&quot; class&equals;&quot;example2&lowbar;&lowbar;img&quot;&gt;
+        &hellip;
+    &lt;&sol;li&gt;
+    &hellip;
+&lt;&sol;ul&gt;</pre>
+
+                <pre class="example__code example__css">.example2__track {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+    .example2__item {
+        /*still must be aligned to the left*/
+    }
+
+        .example2__item .example2__filter-title {
+            color: #aaa;
+        }
+
+        .example2__track:not(.infinitum__track--moving) .example2__item:hover .example2__filter-title {
+            color: darkslategray;
+        }
+
+        .infinitum__item--possible-current .example2__filter-title,
+        .example2__track:not(.infinitum__track--dragging) .infinitum__item--current .example2__filter-title {
+            color: #444;
+        }</pre>
+
+                <pre class="example__code example__js">var example2 = new Infinitum(".example2__infinitum");
+
+var $tabs = $(".example2__tab");
+
+example2.on("change", function (event) {
+
+    var $item = $(event.target);
+
+    $tabs.removeClass("example2__tab--active")
+        .eq($item.index())
+        .addClass("example2__tab--active");
+});</pre>
+
+            </section>
+            <!-- /.example2 examples__example -->
+
+            <script>/*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global $, Infinitum*/
+
+                $(function () {
+
+                    var $images = $(".example2__images");
+
+                    $images.filterizr({
+                        filter: "all",
+                        filterOutCss: {
+                            opacity: 0,
+                            transform: "scale(0.85)"
+                        },
+                        filterInCss: {
+                            opacity: 1,
+                            transform: "scale(1)"
+                        }
+                    });
+
+                    var example2 = window.example2 = new Infinitum({
+                        selector: ".example2__infinitum",
+                        mode: Infinitum.POSITION.CENTER,
+                        current: 0
+                    });
+
+                    example2.on("change", function (event) {
+
+                        var $item = $(event.target);
+
+                        $images.filterizr("filter", $item.data("category"));
+                    });
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE2 // –––––––––-->
 
 
         </div>
