@@ -1413,7 +1413,7 @@
 
         this.$track.addClass(CLASS.moving);
 
-        this._setFadeSpeed(x, fakeMove && !fix);
+        this._setFadeSpeed(x, fakeMove && (!fix || !this.initialized));
 
         if (!animation && !fakeMove) {
 

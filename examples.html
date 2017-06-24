@@ -376,21 +376,21 @@ example1.on("change", function (event) {
     &lt;&sol;ul&gt;
 &lt;&sol;div&gt;
 
-&lt;ul class&equals;&quot;example2&lowbar;&lowbar;tabs&quot;&gt;
-    &lt;li class&equals;&quot;example2&lowbar;&lowbar;tab example2&lowbar;&lowbar;tab--active&quot;&gt;
-        &lt;img src&equals;&quot;http&colon;&sol;&sol;lorempixel&period;com&sol;512&sol;512&sol;animals&sol;10&sol;&quot; alt&equals;&quot;&quot; class&equals;&quot;example2&lowbar;&lowbar;img&quot;&gt;
-        &hellip;
-    &lt;&sol;li&gt;
+&lt;div class&equals;&quot;example2&lowbar;&lowbar;images&quot;&gt;
+    &lt;div class&equals;&quot;example2&lowbar;&lowbar;image filtr-item&quot; data-category&equals;&quot;2&quot;&gt;
+        &lt;img src&equals;&quot;http&colon;&sol;&sol;lorempixel&period;com&sol;512&sol;512&sol;city&sol;4&sol;&quot; alt&equals;&quot;&quot; class&equals;&quot;example2&lowbar;&lowbar;img&quot; width&equals;&quot;256&quot; height&equals;&quot;256&quot;&gt;
+    &lt;&sol;div&gt;
     &hellip;
-&lt;&sol;ul&gt;</pre>
+&lt;&sol;div&gt;</pre>
 
                 <pre class="example__code example__css">.example2__track {
-    display: flex;
-    flex-flow: row nowrap;
+    font-size: 0;
+    white-space: nowrap;
 }
 
     .example2__item {
         /*still must be aligned to the left*/
+        display: inline-block;
     }
 
         .example2__item .example2__filter-title {
@@ -406,17 +406,19 @@ example1.on("change", function (event) {
             color: #444;
         }</pre>
 
-                <pre class="example__code example__js">var example2 = new Infinitum(".example2__infinitum");
+                <pre class="example__code example__js">var example2 = new Infinitum({
+    selector: ".example2__infinitum",
+    mode: Infinitum.POSITION.CENTER,
+    current: 0 //current item will be the first element (.example2__item)
+});
 
-var $tabs = $(".example2__tab");
+var $images = $(".example2__images");
 
 example2.on("change", function (event) {
 
     var $item = $(event.target);
 
-    $tabs.removeClass("example2__tab--active")
-        .eq($item.index())
-        .addClass("example2__tab--active");
+    $images.filterizr("filter", $item.data("category"));
 });</pre>
 
             </section>
@@ -458,6 +460,275 @@ example2.on("change", function (event) {
             </script>
 
             <!--–––––––– // EXAMPLE2 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE3 ** –––––––––-->
+
+            <section class="example3 examples__example">
+
+                <h2 class="example__title">Example 3 — Live (end mode)</h2>
+
+                <div class="example3__infinitum">
+
+                    <ul class="example3__track">
+
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Animals</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Cities</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Nature</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Business</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Food</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Nightlife</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Sports</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Technics</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Fashion</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Transport</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">People</a>
+                        </li>
+                        <li class="example3__item">
+                            <a class="example3__tab-title" href="#">Abstract</a>
+                        </li>
+
+                    </ul>
+                    <!-- /.example3__track -->
+
+                </div>
+                <!-- /.example3__infinitum -->
+
+                <ul class="example3__tabs">
+
+                    <li class="example3__tab example3__tab--active">
+                        <img src="http://lorempixel.com/512/512/animals/10/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/animals/1/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/animals/2/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/animals/3/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/animals/4/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/city/7/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/city/9/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/city/2/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/city/8/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/city/4/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/nature/3/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/nature/5/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/nature/2/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/nature/8/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/nature/4/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/business/3/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/business/5/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/business/2/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/business/9/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/business/10/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/food/2/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/food/3/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/food/4/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/food/9/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/food/1/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/nightlife/2/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/nightlife/3/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/nightlife/4/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/nightlife/7/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/nightlife/6/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/sports/1/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/sports/3/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/sports/5/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/sports/8/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/sports/6/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/technics/1/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/technics/2/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/technics/5/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/technics/7/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/technics/6/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/fashion/7/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/fashion/8/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/fashion/5/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/fashion/9/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/fashion/10/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/transport/4/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/transport/8/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/transport/6/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/transport/9/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/transport/1/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/people/2/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/people/5/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/people/4/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/people/9/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/people/10/" alt="" class="example3__img">
+                    </li>
+
+                    <li class="example3__tab">
+                        <img src="http://lorempixel.com/512/512/abstract/1/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/abstract/5/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/abstract/3/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/abstract/5/" alt="" class="example3__img">
+                        <img src="http://lorempixel.com/512/512/abstract/7/" alt="" class="example3__img">
+                    </li>
+
+                </ul>
+                <!-- /.example3__tabs -->
+
+                <pre class="example__code example__html">&lt;div class&equals;&quot;example3&lowbar;&lowbar;infinitum&quot;&gt;
+    &lt;ul class&equals;&quot;example3&lowbar;&lowbar;track&quot;&gt;
+        &lt;li class&equals;&quot;example3&lowbar;&lowbar;item&quot;&gt;
+            &lt;a class&equals;&quot;example3&lowbar;&lowbar;tab-title&quot; href&equals;&quot;&num;&quot;&gt;Animals&lt;&sol;a&gt;
+        &lt;&sol;li&gt;
+        &hellip;
+    &lt;&sol;ul&gt;
+&lt;&sol;div&gt;
+
+&lt;ul class&equals;&quot;example3&lowbar;&lowbar;tabs&quot;&gt;
+    &lt;li class&equals;&quot;example3&lowbar;&lowbar;tab example3&lowbar;&lowbar;tab--active&quot;&gt;
+        &lt;img src&equals;&quot;http&colon;&sol;&sol;lorempixel&period;com&sol;512&sol;512&sol;animals&sol;10&sol;&quot; alt&equals;&quot;&quot; class&equals;&quot;example3&lowbar;&lowbar;img&quot;&gt;
+        &hellip;
+    &lt;&sol;li&gt;
+    &hellip;
+&lt;&sol;ul&gt;</pre>
+
+                <pre class="example__code example__css">.example3__track {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+    .example3__item {
+        /*still must be aligned to the left*/
+    }
+
+        .example3__item .example3__tab-title {
+            color: #aaa;
+        }
+
+        .example3__track:not(.infinitum__track--moving) .example3__item:hover .example3__tab-title {
+            color: darkslategray;
+        }
+
+        .infinitum__item--possible-current .example3__tab-title,
+        .example3__track:not(.infinitum__track--dragging) .infinitum__item--current .example3__tab-title {
+            color: #444;
+        }</pre>
+
+                <pre class="example__code example__js">var example3 = new Infinitum(".example3__infinitum");
+
+var $tabs = $(".example3__tab");
+
+example3.on("change", function (event) {
+
+    var $item = $(event.target);
+
+    $tabs.removeClass("example3__tab--active")
+        .eq($item.index())
+        .addClass("example3__tab--active");
+});</pre>
+
+            </section>
+            <!-- /.example3 examples__example -->
+
+            <script>/*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global $, Infinitum*/
+
+                $(function () {
+
+                    var example3 = window.example3 = new Infinitum({
+                        selector: ".example3__infinitum",
+                        mode: Infinitum.POSITION.END,
+                        current: 0
+                    });
+
+                    var $tabsWrapper = $(".example3__tabs"),
+                        $tabs = $(".example3__tab");
+
+                    example3.on("change possiblechange", function (event) {
+
+                        if (event.type === "possiblechange") {
+
+                            //do not change tabs when "possiblechange" is not called by dragging the track
+                            if (!example3.dragging()) {
+
+                                return;
+                            }
+
+                            //speed up tab switching when dragging
+                            $tabsWrapper.addClass("speed-up");
+                        }
+
+                        var $item = $(event.target);
+
+                        $tabs.removeClass("example3__tab--active")
+                            .eq($item.index())
+                            .addClass("example3__tab--active");
+                    });
+
+                    var lastEvent = Date.now();
+
+                    //speed up tab switching when scrolling or keys are used
+                    example3.on("scroll key tap", function (event) {
+
+                        if (event.type === "tap" || Date.now() - lastEvent > 500) {
+
+                            $tabsWrapper.removeClass("speed-up");
+
+                            lastEvent = Date.now();
+
+                            return;
+                        }
+
+                        $tabsWrapper.addClass("speed-up");
+
+                        lastEvent = Date.now();
+                    });
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE3 // –––––––––-->
 
 
         </div>
