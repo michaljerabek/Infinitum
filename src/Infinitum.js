@@ -148,6 +148,7 @@
         toStart: "infinitum__item--to-start",
 
         track: "infinitum__track",
+        dragging: "infinitum__track--dragging",
         moving: "infinitum__track--moving",
         speed0: "infinitum__track--static",
         speed1: "infinitum__track--slow",
@@ -350,6 +351,13 @@
             this.destroy();
         }
 
+        if (typeof options === "string") {
+
+            options = {
+                selector: options
+            };
+        }
+
         options = options || this.options || {};
 
         var _DEFAULTS = null;
@@ -453,6 +461,7 @@
         this.$track.css(trackCSS)
             .off(this.NS, "")
             .removeClass(CLASS.track)
+            .removeClass(CLASS.dragging)
             .removeClass(CLASS.moving)
             .removeClass(CLASS.speed0)
             .removeClass(CLASS.speed1)
@@ -632,6 +641,14 @@
         this._lastDir = Infinitum.DIR.RIGHT;
 
         this._setCurrent(this.findPrev(), false, true);
+    };
+
+    /*
+     * <= (Boolean | Number) - Přesouvá uživatel položky?
+     */
+    Infinitum.prototype.dragging = function () {
+
+        return this._hasPointer;
     };
 
     Infinitum.prototype._prepareSelf = function () {
@@ -919,8 +936,6 @@
 
     Infinitum.prototype._onPointerStart = function (event) {
 
-        console.clear();
-
         if (this.frozen) {
 
             return;
@@ -957,6 +972,8 @@
         this._clearTrackTransition();
 
         this._shouldCancelRAF = true;
+
+        this._setPossibleCurrentItem(false, true, true);
 
         this._lastClientY = getClientValue(event, "y", this._pointerIndex);
         this._lastClientX = getClientValue(event, "x", this._pointerIndex);
@@ -1000,6 +1017,7 @@
         if (this._byTouch && this._fixVertical === null) {
 
             this._fixVertical = Math.abs(clientY - this._lastClientY) + 1 > Math.abs(diffX);
+
         }
 
         if (this._fixVertical) {
@@ -1013,6 +1031,11 @@
         }
 
         if (diffX) {
+
+            if (!this._trackMoved) {
+
+                this.$track.addClass(CLASS.dragging);
+            }
 
             this._forceCancelRAF = !this._trackMoved;
 
@@ -1074,7 +1097,7 @@
 
         this._setCurrent(this._findCurrentItem(), false, false, true);
 
-        this.$track.removeClass(CLASS.moving);
+        this.$track.removeClass(CLASS.dragging);
 
         this._trackMoved = false;
 
@@ -2272,19 +2295,27 @@
     /*
      * clear - odstranit possibleCurrent stav (konec přesouvání)
      */
-    Infinitum.prototype._setPossibleCurrentItem = function (clear, rewriteCurrent) {
+    Infinitum.prototype._setPossibleCurrentItem = function (clear, rewriteCurrent, force) {
 
-        var $possible = this._findCurrentItem(true);
+        if (rewriteCurrent) {
 
-        if ($possible[0] !== this._$possibleCurrent[0] && rewriteCurrent) {
+            var $possible = this._findCurrentItem(true),
 
-            $possible.addClass(CLASS.possibleCurrent);
+                chagned = $possible[0] !== this._$possibleCurrent[0];
 
-            this._$possibleCurrent.removeClass(CLASS.possibleCurrent);
+            if (chagned || force) {
 
-            this._triggerChangeTypeEvent(Infinitum.EVENT.possibleChange, null, $possible);
+                $possible.addClass(CLASS.possibleCurrent);
 
-            this._$possibleCurrent = $possible;
+                if (chagned) {
+
+                    this._$possibleCurrent.removeClass(CLASS.possibleCurrent);
+
+                    this._triggerChangeTypeEvent(Infinitum.EVENT.possibleChange, null, $possible);
+
+                    this._$possibleCurrent = $possible;
+                }
+            }
         }
 
         if (clear) {

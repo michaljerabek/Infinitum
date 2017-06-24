@@ -168,6 +168,26 @@
             color: inherit;
         }
 
+        .infinitum .infinitum__item {
+            transition-property: opacity, color, background, filter;
+        }
+
+        .infinitum .infinitum__item--current {
+            color: white;
+            background: black;
+            filter: grayscale(0);
+        }
+
+        .infinitum .infinitum__item--possible-current {
+            color: white;
+            background: crimson;
+        }
+
+        .example4.infinitum .infinitum__item--possible-current,
+        .example5.infinitum .infinitum__item--possible-current {
+            filter: sepia(1);
+        }
+
     </style>
 
 </head>

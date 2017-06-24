@@ -24,10 +24,10 @@
     .infinitum__item {
         opacity: 1;
 
-        -webkit-transition-property: opacity, color, background, filter;
-        -moz-transition-property: opacity, color, background, filter;
-        -o-transition-property: opacity, color, background;
-        transition-property: opacity, color, background, filter;
+        -webkit-transition-property: opacity;
+        -moz-transition-property: opacity;
+        -o-transition-property: opacity;
+        transition-property: opacity;
         -webkit-transition-timing-function: ease-out;
         -moz-transition-timing-function: ease-out;
         -o-transition-timing-function: ease-out;
@@ -106,22 +106,6 @@
         -o-transition-duration: 0.1s;
         transition-duration: 0.1s;
 }
-
-    .infinitum .infinitum__item--current {
-	    color: white;
-	    background: black;
-        filter: grayscale(0);
-    }
-
-    .infinitum .infinitum__item--possible-current {
-	    color: white;
-	    background: crimson;
-    }
-
-    .example4.infinitum .infinitum__item--possible-current,
-    .example5.infinitum .infinitum__item--possible-current {
-        filter: sepia(1);
-    }
 
 /*---------------------------- DEBUG ----------------------------*/
 
