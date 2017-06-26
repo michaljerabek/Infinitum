@@ -631,3 +631,117 @@ body {
 
                 color: #444;
             }
+
+/*----------------------------- EXAMPLE5 -----------------------------*/
+
+.example5__infinitum {
+    position: relative;
+
+    padding: 12px 0;
+    margin: -4px -2px;
+    margin-bottom: 10px;
+}
+
+.example5__infinitum:hover,
+.example5__infinitum:focus {
+    outline: none;
+}
+
+    .example5__track {
+        display: flex;
+        flex-flow: row nowrap;
+    }
+
+        .example5__item {
+            width: 25%;
+            flex-shrink: 0;
+
+            list-style-type: none;
+        }
+
+            .example5__item .example5__image {
+                padding: 4px 2px;
+
+                display: block;
+            }
+
+                .example5__item .example5__img {
+                    width: 100%;
+
+                    opacity: 0.8;
+                    filter: grayscale(1);
+
+                    transition: filter 0.25s ease, opacity 0.25s ease;
+                }
+
+                .example5__track:not(.infinitum__track--moving) .example5__item:hover .example5__img {
+                    opacity: 1;
+                }
+
+                .infinitum__item--possible-current .example5__img,
+                .example5__track:not(.infinitum__track--dragging) .infinitum__item--current .example5__img {
+                    filter: grayscale(0);
+                    opacity: 1;
+                }
+
+.example5__controls {
+    margin-bottom: 32px;
+
+    display: flex;
+    align-items: stretch;
+}
+
+    .example5__button {
+        font-family: inherit;
+        font-size: 18px;
+        line-height: 40px;
+
+        padding: 0;
+
+        color: #888;
+        background: none;
+        border: none;
+        cursor: pointer;
+
+        transition: color 0.25s ease;
+    }
+
+    .example5__button:focus,
+    .example5__button:hover {
+        color: darkslategray;
+        outline: none
+    }
+
+    .example5__button--freeze {
+        padding-right: 12px;
+        margin-right: auto;
+    }
+
+    .example5__button--prev {
+        padding-right: 12px;
+    }
+
+    .example5__button--next {
+        padding-left: 12px;
+    }
+
+    .example5__select {
+        font-family: inherit;
+        font-size: 18px;
+        line-height: 40px;
+
+        padding: 0 4px;
+
+        color: #888;
+        background: none;
+        border: none;
+        cursor: pointer;
+
+        transition: color 0.25s ease;
+    }
+
+    .example5__select:focus,
+    .example5__select:hover {
+        color: darkslategray;
+        outline: none
+    }

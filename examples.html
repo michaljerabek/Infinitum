@@ -189,10 +189,10 @@
                 </ul>
                 <!-- /.example1__tabs -->
 
-               <pre class="example__code example__html">&lt;div class&equals;&quot;example1&lowbar;&lowbar;infinitum&quot;&gt;
-    &lt;ul class&equals;&quot;example1&lowbar;&lowbar;track&quot;&gt;
-        &lt;li class&equals;&quot;example1&lowbar;&lowbar;item&quot;&gt;
-            &lt;a class&equals;&quot;example1&lowbar;&lowbar;tab-title&quot; href&equals;&quot;&num;&quot;&gt;Animals&lt;&sol;a&gt;
+                <pre class="example__code example__html">&lt;div class&equals;&quot;example1&lowbar;&lowbar;infinitum&quot;&gt;&lt;&excl;-- required --&gt;
+    &lt;ul class&equals;&quot;example1&lowbar;&lowbar;track&quot;&gt;&lt;&excl;-- required --&gt;
+        &lt;li class&equals;&quot;example1&lowbar;&lowbar;item&quot;&gt;&lt;&excl;-- required --&gt;
+            &lt;a class&equals;&quot;example1&lowbar;&lowbar;tab-title&quot; href&equals;&quot;&num;&quot;&gt;Animals&lt;&sol;a&gt;&lt;&excl;-- not required --&gt;
         &lt;&sol;li&gt;
         &hellip;
     &lt;&sol;ul&gt;
@@ -966,58 +966,50 @@ example3.on("scroll key tap dragging dragend", function (event) {
                 </div>
                 <!-- /.example4__infinitum -->
 
-                <pre class="example__code example__html">&lt;div class&equals;&quot;example4&lowbar;&lowbar;infinitum&quot;&gt;
-    &lt;ul class&equals;&quot;example4&lowbar;&lowbar;track&quot;&gt;
-        &lt;li class&equals;&quot;example4&lowbar;&lowbar;item&quot; data-category&equals;&quot;all&quot;&gt;
-            &lt;a class&equals;&quot;example4&lowbar;&lowbar;filter-title&quot; href&equals;&quot;&num;&quot;&gt;All&lt;&sol;a&gt;
+                <pre class="example__code example__html">&lt;div class&equals;&quot;example4&lowbar;&lowbar;infinitum example4&lowbar;&lowbar;infinitum--1&quot;&gt;
+    &lt;ol class&equals;&quot;example4&lowbar;&lowbar;track&quot;&gt;
+        &lt;li class&equals;&quot;example4&lowbar;&lowbar;item&quot;&gt;
+            &lt;a class&equals;&quot;example4&lowbar;&lowbar;number&quot; href&equals;&quot;&num;&quot;&gt;1&lt;&sol;a&gt;
         &lt;&sol;li&gt;
         &hellip;
-    &lt;&sol;ul&gt;
-&lt;&sol;div&gt;
-
-&lt;div class&equals;&quot;example4&lowbar;&lowbar;images&quot;&gt;
-    &lt;div class&equals;&quot;example4&lowbar;&lowbar;image filtr-item&quot; data-category&equals;&quot;2&quot;&gt;
-        &lt;img src&equals;&quot;http&colon;&sol;&sol;lorempixel&period;com&sol;512&sol;512&sol;city&sol;4&sol;&quot; alt&equals;&quot;&quot; class&equals;&quot;example4&lowbar;&lowbar;img&quot; width&equals;&quot;256&quot; height&equals;&quot;256&quot;&gt;
-    &lt;&sol;div&gt;
-    &hellip;
+    &lt;&sol;ol&gt;
 &lt;&sol;div&gt;</pre>
 
-                <pre class="example__code example__css">.example4__track {
-    font-size: 0;
-    white-space: nowrap;
+                <pre class="example__code example__css">.example4__infinitum {
+    overflow: hidden;
 }
-
-    .example4__item {
-        /*still must be aligned to the left*/
-        display: inline-block;
+    .example4__track {
+        font-size: 0;
+        white-space: nowrap;
     }
 
-        .example4__item .example4__filter-title {
-            color: #aaa;
+        .example4__item {
+            /*still must be aligned to the left*/
+            display: inline-block;
         }
 
-        .example4__track:not(.infinitum__track--moving) .example4__item:hover .example4__filter-title {
-            color: darkslategray;
-        }
+            .example4__item .example4__number {
+                color: #aaa;
+            }
 
-        .infinitum__item--possible-current .example4__filter-title,
-        .example4__track:not(.infinitum__track--dragging) .infinitum__item--current .example4__filter-title {
-            color: #444;
-        }</pre>
+            .example4__track:not(.infinitum__track--moving) .example4__item:hover .example4__number {
+                color: darkslategray;
+            }
+
+            .infinitum__item--possible-current .example4__number,
+            .example4__track:not(.infinitum__track--dragging) .infinitum__item--current .example4__number {
+                transform: scale(1.25);
+
+                color: #444;
+            }</pre>
 
                 <pre class="example__code example__js">var example4 = new Infinitum({
-    selector: ".example4__infinitum",
+    selector: ".example4__infinitum--1",
     mode: Infinitum.POSITION.CENTER,
-    current: 0 //current item will be the first element (.example4__item)
-});
-
-var $images = $(".example4__images");
-
-example4.on("change", function (event) {
-
-    var $item = $(event.target);
-
-    $images.filterizr("filter", $item.data("category"));
+    fade: false, //no fade effect (won't be visible)
+    currentIn: Infinitum.CURRENT.STILL_INSIDE, //as current will be used the item, which is in the center of the widget; Infinitum.CURRENT.FULL has the same effect
+    currentOut: Infinitum.CURRENT.STILL_INSIDE, //not necessary; it will use value from the currentIn option, because mode is Infinitum.POSITION.CENTER
+    current: 0
 });</pre>
 
             </section>
@@ -1042,14 +1034,251 @@ example4.on("change", function (event) {
                         mode: Infinitum.POSITION.CENTER,
                         fade: false,
                         currentIn: Infinitum.CURRENT.STILL_INSIDE,
-                        currentOut: Infinitum.CURRENT.STILL_INSIDE,
-                        current: 0
+                        currentOut: Infinitum.CURRENT.STILL_INSIDE
                     });
                 });
 
             </script>
 
             <!--–––––––– // EXAMPLE4 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE5 ** –––––––––-->
+
+            <section class="example5 examples__example">
+
+                <h2 class="example__title">Example 5 — Methods</h2>
+
+                <div class="example5__infinitum">
+
+                    <ol class="example5__track">
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/animals/10/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/animals/3/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/nature/3/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/nature/2/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/nature/4/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/food/4/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/food/1/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/sports/6/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/transport/8/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                        <li class="example5__item">
+                            <a href="#" class="example5__image">
+                                <img src="http://lorempixel.com/512/512/transport/9/" alt="" class="example5__img">
+                            </a>
+                        </li>
+
+                    </ol>
+                    <!-- /.example5__track -->
+
+                </div>
+                <!-- /.example5__infinitum -->
+
+                <div class="example5__controls">
+
+                    <button class="example5__button example5__button--freeze">Freeze</button>
+
+                    <button class="example5__button example5__button--move example5__button--prev">Previous</button>
+
+                    <select class="example5__select">
+                        <option value="0">1</option>
+                        <option value="1">2</option>
+                        <option value="2">3</option>
+                        <option value="3">4</option>
+                        <option value="4">5</option>
+                        <option value="5">6</option>
+                        <option value="6">7</option>
+                        <option value="7">8</option>
+                        <option value="8">9</option>
+                        <option value="9">10</option>
+                    </select>
+
+                    <button class="example5__button example5__button--move example5__button--next">Next</button>
+
+                </div>
+                <!-- /.example5__controls -->
+
+                <pre class="example__code example__html">&lt;div class&equals;&quot;example5&lowbar;&lowbar;infinitum&quot;&gt;
+    &lt;ul class&equals;&quot;example5&lowbar;&lowbar;track&quot;&gt;
+        &lt;li class&equals;&quot;example5&lowbar;&lowbar;item&quot;&gt;
+            &lt;a href&equals;&quot;&num;&quot; class&equals;&quot;example5&lowbar;&lowbar;image&quot;&gt;
+                &lt;img src&equals;&quot;http&colon;&sol;&sol;lorempixel&period;com&sol;512&sol;512&sol;animals&sol;10&sol;&quot; alt&equals;&quot;&quot; class&equals;&quot;example5&lowbar;&lowbar;img&quot;&gt;
+            &lt;&sol;a&gt;
+        &lt;&sol;li&gt;
+        &hellip;
+    &lt;&sol;ul&gt;
+&lt;&sol;div&gt;</pre>
+
+                <pre class="example__code example__css">.example5__track {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+    .example5__item {
+        width: 25%;
+        flex-shrink: 0;
+    }
+
+        .example5__item .example5__image {
+            padding: 4px 2px;
+        }
+
+            .example5__item .example5__img {
+                opacity: 0.8;
+                filter: grayscale(1);
+            }
+
+            .example5__track:not(.infinitum__track--moving) .example5__item:hover .example5__img {
+                opacity: 1;
+            }
+
+            .infinitum__item--possible-current .example5__img,
+            .example5__track:not(.infinitum__track--dragging) .infinitum__item--current .example5__img {
+                filter: grayscale(0);
+                opacity: 1;
+            }</pre>
+
+                <pre class="example__code example__js">var example5 = new Infinitum({
+    selector: ".example5__infinitum",
+    breakAll: true, //always moves all item
+    clearEdge: false, //items may remain on the left
+    currentIn: Infinitum.CURRENT.FULL //as current will be used item, which is fully inside the widget (if moving in the direction — left)
+});
+
+var $buttons = $(".example5__button"),
+    $select = $(".example5__select");
+
+$buttons.on("click touchend", function (event) {
+
+    event.preventDefault();
+
+    if (this.className.match(/--next/)) {
+
+        example5.next();
+
+        return;
+    }
+
+    example5.prev();
+});
+
+$select.on("change", function () {
+
+    example5.setCurrent(Number(this.value));
+});
+
+example5.on("change", function (event) {
+
+    $select.val($(event.target).index());
+});</pre>
+
+            </section>
+            <!-- /.example5 examples__example -->
+
+            <script>/*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global $, Infinitum*/
+
+                $(function () {
+
+                    var example5 = window.example5 = new Infinitum({
+                        selector: ".example5__infinitum",
+                        breakAll: true,
+                        clearEdge: false,
+                        currentIn: Infinitum.CURRENT.FULL
+                    });
+
+                    var $buttons = $(".example5__button"),
+                        $select = $(".example5__select");
+
+                    $buttons.filter(".example5__button--move").on("click touchend", function (event) {
+
+                        event.preventDefault();
+
+                        if (this.className.match(/--next/)) {
+
+                            example5.next();
+
+                            return;
+                        }
+
+                        example5.prev();
+                    });
+
+                    $buttons.filter(".example5__button--freeze").on("click touch", function () {
+
+                        if (this.innerText.match(/^freeze/i)) {
+
+                            example5.freeze();
+
+                            this.innerText = "Unfreeze";
+
+                            return;
+                        }
+
+                        example5.unfreeze();
+
+                        this.innerText = "Freeze";
+                    });
+
+                    $select.on("change", function () {
+
+                        example5.setCurrent(Number(this.value));
+                    });
+
+                    example5.on("change", function (event) {
+
+                        $select.val($(event.target).index());
+                    });
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE5 // –––––––––-->
 
 
         </div>
