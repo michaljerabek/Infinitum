@@ -640,6 +640,12 @@ body {
     padding: 12px 0;
     margin: -4px -2px;
     margin-bottom: 10px;
+
+    transition: filter 0.25s ease;
+}
+
+.example5__infinitum.infinitum--frozen {
+    filter: sepia(1) hue-rotate(158deg) saturate(0.85);
 }
 
 .example5__infinitum:hover,

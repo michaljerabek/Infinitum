@@ -8,13 +8,13 @@ var cleanCSS = require("gulp-clean-css");
 gulp.task("js", function () {
 
     gulp.src(["./src/*.js"])
-        .pipe(concat("infinitum.dist.js"))
+        .pipe(concat("infinitum.js"))
         .pipe(
             gulp.dest("./dist")
         )
         .pipe(uglify())
         .pipe(rename(function (path) {
-            path.basename = "infinitum.dist.min";
+            path.basename = "infinitum.min";
         }))
         .pipe(
             gulp.dest("./dist")
@@ -30,7 +30,7 @@ gulp.task("css", function () {
         )
         .pipe(cleanCSS())
         .pipe(rename(function (path) {
-            path.basename = "infinitum.dist.min";
+            path.basename = "infinitum.min";
         }))
         .pipe(
             gulp.dest("./dist/css")

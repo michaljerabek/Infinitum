@@ -11,17 +11,15 @@
 
     <!--STYLES-->
     <link rel="stylesheet" href="examples.css">
-    <link rel="stylesheet" href="src/Infinitum.css">
+    <link rel="stylesheet" href="../src/Infinitum.css">
 
     <!--JAVASCRIPT-->
     <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
-    <script src="src/Infinitum.js"></script>
+    <script src="../src/Infinitum.js"></script>
     <script src="jquery.filterizr.min.js"></script>
 
 </head>
 <body>
-
-<!--    <script src="http://mjerabek.wz.cz/onScreenLog.js"></script>-->
 
 
     <!--–––––––– ** EXAMPLES ** –––––––––-->
@@ -762,7 +760,7 @@ example3.on("scroll key tap dragging dragend", function (event) {
 
                 <h2 class="example__title">Example 4 — Number selector</h2>
 
-                <p class="example__description">Try multi-touch support.</p>
+                <p class="example__description">It's possible to use both at the same time (multi-touch).</p>
 
                 <div class="example4__infinitum example4__infinitum--1">
 
@@ -978,6 +976,7 @@ example3.on("scroll key tap dragging dragend", function (event) {
                 <pre class="example__code example__css">.example4__infinitum {
     overflow: hidden;
 }
+
     .example4__track {
         font-size: 0;
         white-space: nowrap;
@@ -1121,11 +1120,11 @@ example3.on("scroll key tap dragging dragend", function (event) {
 
                 <div class="example5__controls">
 
-                    <button class="example5__button example5__button--freeze">Freeze</button>
+                    <button class="example5__button example5__button--freeze" title="example5.freeze()">Freeze</button>
 
-                    <button class="example5__button example5__button--move example5__button--prev">Previous</button>
+                    <button class="example5__button example5__button--move example5__button--prev" title="example5.prev()">Previous</button>
 
-                    <select class="example5__select">
+                    <select class="example5__select" title="example5.setCurrent(/*jQuery | Number | String*/)">
                         <option value="0">1</option>
                         <option value="1">2</option>
                         <option value="2">3</option>
@@ -1138,7 +1137,7 @@ example3.on("scroll key tap dragging dragend", function (event) {
                         <option value="9">10</option>
                     </select>
 
-                    <button class="example5__button example5__button--move example5__button--next">Next</button>
+                    <button class="example5__button example5__button--move example5__button--next" title="example5.next()">Next</button>
 
                 </div>
                 <!-- /.example5__controls -->
@@ -1197,14 +1196,21 @@ $buttons.on("click touchend", function (event) {
 
     event.preventDefault();
 
-    if (this.className.match(/--next/)) {
+    var moveMethod = this.className.match(/--(prev|next)/);
 
-        example5.next();
+    if (moveMethod) {
+
+        //example5.next();
+        //example5.prev();
+        example5[moveMethod[1]]();
 
         return;
     }
 
-    example5.prev();
+    example5[example5.frozen ? "unfreeze" : "freeze"]();
+
+    this.innerText = example5.frozen ? "Unfreeze" : "Freeze";
+    this.title = example5.frozen ? "example5.unfreeze()" : "example5.freeze()";
 });
 
 $select.on("change", function () {
@@ -1235,34 +1241,23 @@ example5.on("change", function (event) {
                     var $buttons = $(".example5__button"),
                         $select = $(".example5__select");
 
-                    $buttons.filter(".example5__button--move").on("click touchend", function (event) {
+                    $buttons.on("click touchend", function (event) {
 
                         event.preventDefault();
 
-                        if (this.className.match(/--next/)) {
+                        var moveMethod = this.className.match(/--(prev|next)/);
 
-                            example5.next();
+                        if (moveMethod) {
 
-                            return;
-                        }
-
-                        example5.prev();
-                    });
-
-                    $buttons.filter(".example5__button--freeze").on("click touch", function () {
-
-                        if (this.innerText.match(/^freeze/i)) {
-
-                            example5.freeze();
-
-                            this.innerText = "Unfreeze";
+                            example5[moveMethod[1]]();
 
                             return;
                         }
 
-                        example5.unfreeze();
+                        example5[example5.frozen ? "unfreeze" : "freeze"]();
 
-                        this.innerText = "Freeze";
+                        this.innerText = example5.frozen ? "Unfreeze" : "Freeze";
+                        this.title = example5.frozen ? "example5.unfreeze()" : "example5.freeze()";
                     });
 
                     $select.on("change", function () {
