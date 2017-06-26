@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Infinitum</title>
+
+    <link rel="stylesheet" href="src/Infinitum.css">
+
+    <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="src/Infinitum.js"></script>
+
+    <style>
+
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        .wrapper {
+            background-color: #eee;
+
+            overflow: hidden;
+        }
+
+        .content {
+            font-family: sans-serif;
+
+            width: 80%;
+            min-width: 280px;
+            max-width: 1200px;
+            padding: 40px;
+            margin: 0px auto;
+
+            background-color: #fff;
+        }
+
+        h2 {
+            font-size: 32px;
+
+            margin-bottom: 24px;
+        }
+
+        .example0,
+        .example1,
+        .example2,
+        .example3,
+        .example4,
+        .example5,
+        .example7,
+        .example8,
+        .example6 {
+            font-size: 0;
+            white-space: nowrap;
+/*            direction: rtl;*/
+
+            margin-bottom: 32px;
+
+            background-color: #eee;
+        }
+
+        .example4,
+        .example5 {
+            padding: 10px;
+        }
+
+        .example0__item,
+        .example1__item,
+        .example2__item,
+        .example3__item,
+        .example4__item,
+        .example5__item,
+        .example7__item,
+        .example8__item,
+        .example6__item {
+/*            direction: ltr;*/
+
+            display: inline-block;
+        }
+
+        .example0__item,
+        .example1__item,
+        .example2__item,
+        .example3__item,
+        .example7__item,
+        .example8__item,
+        .example6__item {
+            font-size: 32px;
+
+            padding: 15px 20px;
+        }
+
+        .example3__item {
+	        width: calc(50% - 40px);
+
+            overflow-y: hidden;
+        }
+
+        .example8__item,
+        .example7__item,
+        .example6__item {
+            text-align: center;
+
+	        width: 44px;
+        }
+
+        .example8,
+        .example7 {
+/*            direction: rtl; */
+            position: relative;
+
+            padding: 10px 0;
+
+/*            overflow: hidden;*/
+        }
+
+        .example7__item {
+/*            direction: ltr;*/
+
+            outline: 1px solid lime;
+            outline-offset: -1px;
+        }
+
+        .example8__item {
+/*            direction: ltr;*/
+
+            outline: 1px solid gold;
+            outline-offset: -1px;
+        }
+
+        .example6__item {
+            outline: 1px solid deeppink;
+            outline-offset: -1px;
+        }
+
+        .example7__item span,
+        .example8__item span,
+        .example6__item span {
+            transform: scale(1);
+
+            display: inline-block;
+
+            transition: transform;
+            transition-duration: 0.15s;
+        }
+
+        .example6__item.infinitum__item--possible-current span,
+        .example6__item.infinitum__item--current span,
+        .example7__item.infinitum__item--possible-current span,
+        .example7__item.infinitum__item--current span,
+        .example8__item.infinitum__item--possible-current span,
+        .example8__item.infinitum__item--current span {
+            transform: scale(1.75);
+
+            display: inline-block;
+        }
+
+        .example4__item,
+        .example5__item {
+            line-height: 0;
+
+            filter: grayscale(1);
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .infinitum .infinitum__item {
+            transition-property: opacity, color, background, filter;
+        }
+
+        .infinitum .infinitum__item--current {
+            color: white;
+            background: black;
+            filter: grayscale(0);
+        }
+
+        .infinitum .infinitum__item--possible-current {
+            color: white;
+            background: crimson;
+        }
+
+        .example4.infinitum .infinitum__item--possible-current,
+        .example5.infinitum .infinitum__item--possible-current {
+            filter: sepia(1);
+        }
+
+    </style>
+
+</head>
+<body>
+
+    <button onclick="eval(prompt('execute'))" style="position: fixed; top:0; left:0;padding: 5px;">JavaScript</button>
+
+    <div class="wrapper">
+
+        <div class="content">
+
+
+            <!--–––––––– ** EXAMPLE0 ** –––––––––-->
+
+            <h2>Example 0</h2>
+
+            <div class="example0">
+
+                <div class="example0__wrapper">
+
+                    <div class="example0__item">Quibusdam totam</div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example0 = new Infinitum({
+                        selector: ".example0",
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE0 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE1 ** –––––––––-->
+
+            <h2>Example 1</h2>
+
+            <div class="example1">
+
+                <div class="example1__wrapper">
+
+                    <div class="example1__item">Quibusdam totam</div>
+                    <div class="example1__item">Est velit consequatur</div>
+                    <div class="example1__item">Doloremque quis</div>
+                    <div class="example1__item">Consectetur</div>
+                    <div class="example1__item">Mollitia vitae magni sequi</div>
+                    <div class="example1__item">Dolorum culpa assumenda</div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example1 = new Infinitum({
+                        selector: ".example1"
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE1 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE2 ** –––––––––-->
+
+            <h2>Example 2</h2>
+
+            <div class="example2">
+
+                <div class="example2__wrapper">
+
+                    <div class="example2__item">Doloremque quis</div>
+                    <div class="example2__item">Est velit consequatur</div>
+                    <div class="example2__item">Quibusdam totam</div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example2 = new Infinitum({
+                        selector: ".example2",
+                        mode: Infinitum.POSITION.END
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE2 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE3 ** –––––––––-->
+
+            <h2>Example 3</h2>
+
+            <div class="example3">
+
+                <div class="example3__wrapper">
+
+                    <div class="example3__item"><a href="#">Mollitia vitae magni sequi</a></div>
+                    <div class="example3__item"><a href="#">Doloremque quis</a></div>
+                    <div class="example3__item"><a href="#">Dolorum culpa assumenda</a></div>
+                    <div class="example3__item"><a href="#">Consectetur</a></div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example3 = new Infinitum({
+                        selector: ".example3",
+                        breakAll: true
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE3 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE4 ** –––––––––-->
+
+            <h2>Example 4</h2>
+
+            <div class="example4">
+
+                <div class="example4__wrapper">
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/1/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/2/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/3/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/4/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/5/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/6/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example4__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/city/7/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example4 = new Infinitum({
+                        selector: ".example4",
+                        mode: Infinitum.POSITION.END
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE4 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE5 ** –––––––––-->
+
+            <h2>Example 5</h2>
+
+            <div class="example5">
+
+                <div class="example5__wrapper">
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/320/240/transport/1/); width: 320px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/240/240/transport/2/); width: 240px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/180/240/transport/3/); width: 180px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/300/240/transport/4/); width: 300px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/160/240/transport/5/); width: 160px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/400/240/transport/6/); width: 400px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                    <div class="example5__item">
+                        <a href="#">
+                            <div style="background-image: url(http://lorempixel.com/280/240/transport/7/); width: 280px; height: 240px"></div>
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example5 = new Infinitum({
+                        selector: ".example5"
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE5 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE6 ** –––––––––-->
+
+            <h2>Example 6</h2>
+
+            <div class="example6">
+
+                <div class="example6__wrapper">
+
+                    <div class="example6__item"><span>1</span></div>
+                    <div class="example6__item"><span>2</span></div>
+                    <div class="example6__item"><span>3</span></div>
+                    <div class="example6__item"><span>4</span></div>
+                    <div class="example6__item"><span>5</span></div>
+                    <div class="example6__item"><span>6</span></div>
+                    <div class="example6__item"><span>7</span></div>
+                    <div class="example6__item"><span>8</span></div>
+                    <div class="example6__item"><span>9</span></div>
+                    <div class="example6__item"><span>10</span></div>
+                    <div class="example6__item"><span>11</span></div>
+                    <div class="example6__item"><span>12</span></div>
+                    <div class="example6__item"><span>13</span></div>
+                    <div class="example6__item"><span>14</span></div>
+                    <div class="example6__item"><span>15</span></div>
+                    <div class="example6__item"><span>16</span></div>
+                    <div class="example6__item"><span>17</span></div>
+                    <div class="example6__item"><span>18</span></div>
+                    <div class="example6__item"><span>19</span></div>
+                    <div class="example6__item"><span>20</span></div>
+
+                </div>
+
+            </div>
+
+            <button onclick="example6._move(0,0,1)">fakemove</button>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example6 = new Infinitum({
+                        selector: ".example6",
+                        breakAll: true,
+                        clearEdge: false,
+                        currentIn: Infinitum.CURRENT.FULL,
+                        currentOut: Infinitum.CURRENT.STILL_INSIDE,
+                        mode: Infinitum.POSITION.END,
+                        reverseItems: true
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE6 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE7 ** –––––––––-->
+
+            <h2>Example 7</h2>
+
+            <div class="example7">
+
+                <div class="example7__wrapper">
+
+                    <div class="example7__item"><span>1</span></div>
+                    <div class="example7__item"><span>2</span></div>
+                    <div class="example7__item"><span>3</span></div>
+                    <div class="example7__item"><span>4</span></div>
+                    <div class="example7__item"><span>5</span></div>
+                    <div class="example7__item"><span>6</span></div>
+                    <div class="example7__item"><span>7</span></div>
+                    <div class="example7__item"><span>8</span></div>
+                    <div class="example7__item"><span>9</span></div>
+                    <div class="example7__item"><span>10</span></div>
+                    <div class="example7__item"><span>11</span></div>
+                    <div class="example7__item"><span>12</span></div>
+                    <div class="example7__item"><span>13</span></div>
+                    <div class="example7__item"><span>14</span></div>
+                    <div class="example7__item"><span>15</span></div>
+                    <div class="example7__item"><span>16</span></div>
+                    <div class="example7__item"><span>17</span></div>
+                    <div class="example7__item"><span>18</span></div>
+                    <div class="example7__item"><span>19</span></div>
+                    <div class="example7__item"><span>20</span></div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example7 = new Infinitum({
+                        selector: ".example7",
+//                        fade: false,
+                        leftBreak: Infinitum.POSITION.END,
+                        currentIn: Infinitum.CURRENT.FULL,
+                        currentOut: Infinitum.CURRENT.FULL,
+                        fade: Infinitum.POSITION.START
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE7 // –––––––––-->
+
+
+            <!--–––––––– ** EXAMPLE8 ** –––––––––-->
+
+            <h2>Example 8</h2>
+
+            <div class="example8">
+
+                <div class="example8__wrapper">
+
+                    <div class="example8__item" style="width: 100px;"><span>1</span></div>
+                    <div class="example8__item" style="width: 30px;"><span>2</span></div>
+                    <div class="example8__item" style="width: 80px;"><span>3</span></div>
+                    <div class="example8__item" style="width: 40px;"><span>4</span></div>
+                    <div class="example8__item" style="width: 70px;"><span>5</span></div>
+                    <div class="example8__item" style="width: 90px;"><span>6</span></div>
+                    <div class="example8__item" style="width: 30px;"><span>7</span></div>
+                    <div class="example8__item" style="width: 80px;"><span>8</span></div>
+
+                </div>
+
+            </div>
+
+            <script> /*jslint indent: 4, white: true, unparam: true, node: true, browser: true, devel: true, nomen: true, plusplus: true, regexp: true, sloppy: true, vars: true*/
+                /*global Infinitum, $*/
+
+                $(function () {
+
+                    window.example8 = new Infinitum({
+                        selector: ".example8",
+                        mode: Infinitum.POSITION.CENTER
+                    });
+
+                });
+
+            </script>
+
+            <!--–––––––– // EXAMPLE8 // –––––––––-->
+
+
+        </div>
+
+    </div>
+
+    <script src="http://mjerabek.wz.cz/onScreenLog.js"></script>
+
+</body>
+</html>
