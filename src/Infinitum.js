@@ -191,8 +191,12 @@
          */
         selector: CLASS.selector("self"),
 
+        /* HTMLElement | jQuery - element widgetu (má přednost před "selector")
+         */
+        el: null,
+
         /* String - selektor vybírající posouvací element
-         * Není-li nastaven použije se první potomek elementu ze "selector".
+         * Není-li nastaven použije se první potomek elementu ze "selector" / "el".
          */
         trackSelector: null,
 
@@ -254,14 +258,14 @@
          * pokud je mode Infinitum.POSITION.END, výchozí je Infinitum.POSITION.END
          *     - .CENTER | .START | .END
          */
-        leftBreak: POSITION.CENTER,
+        startBreak: POSITION.CENTER,
 
         /* Infinitum.POSITION - kdy přesunou položky na pravé straně
          * pokud je fade false, výchozí je Infinitum.POSITION.START
          * pokud je mode Infinitum.POSITION.END, výchozí je Infinitum.POSITION.CENTER
          *     - .CENTER | .START | .END
          */
-        rightBreak: POSITION.END,
+        endBreak: POSITION.END,
 
         /* Boolean - přesouvat položky pouze pokud přesahují kraj widgetu
          */
@@ -360,6 +364,13 @@
             };
         }
 
+        if (options && (options.jquery || options instanceof HTMLElement)) {
+
+            options = {
+                el: options
+            };
+        }
+
         options = options || this.options || {};
 
         var _DEFAULTS = null;
@@ -368,16 +379,16 @@
 
             _DEFAULTS = $.extend({}, DEFAULTS);
 
-            _DEFAULTS.leftBreak = Infinitum.POSITION.END;
-            _DEFAULTS.rightBreak = Infinitum.POSITION.START;
+            _DEFAULTS.startBreak = Infinitum.POSITION.END;
+            _DEFAULTS.endBreak = Infinitum.POSITION.START;
         }
 
         if (options.mode === POSITION.CENTER) {
 
             _DEFAULTS = _DEFAULTS || $.extend({}, DEFAULTS);
 
-            _DEFAULTS.leftBreak = Infinitum.POSITION.END;
-            _DEFAULTS.rightBreak = Infinitum.POSITION.START;
+            _DEFAULTS.startBreak = Infinitum.POSITION.END;
+            _DEFAULTS.endBreak = Infinitum.POSITION.START;
 
             _DEFAULTS.currentIn = Infinitum.CURRENT.CLOSEST;
             _DEFAULTS.currentOut = Infinitum.CURRENT.CLOSEST;
@@ -393,8 +404,8 @@
 
                 _DEFAULTS = _DEFAULTS || $.extend({}, DEFAULTS);
 
-                _DEFAULTS.leftBreak = POSITION.END;
-                _DEFAULTS.rightBreak = POSITION.CENTER;
+                _DEFAULTS.startBreak = POSITION.END;
+                _DEFAULTS.endBreak = POSITION.CENTER;
             }
         }
 
@@ -655,8 +666,9 @@
 
     Infinitum.prototype._prepareSelf = function () {
 
-        this.$self = $(this.options.selector)
-            .attr("tabindex", 0)
+        this.$self = this.options.el && this.options.el.jquery ? this.options.el : $(this.options.el instanceof HTMLElement ? this.options.el : this.options.selector);
+
+        this.$self.attr("tabindex", 0)
             .attr("data-" + DATA.url, PROJECT_URL)
             .addClass(this.options.mode === POSITION.START ? CLASS.start :
                 this.options.mode === POSITION.END ? CLASS.end : CLASS.center)
@@ -1780,42 +1792,42 @@
 
     Infinitum.prototype._getBreakEdge = function (itemRect) {
 
-        var leftBreakEdge = itemRect.left,
-            rightBreakEdge = itemRect.right - 1;
+        var startBreakEdge = itemRect.left,
+            endBreakEdge = itemRect.right - 1;
 
-        switch (this.options.leftBreak) {
+        switch (this.options.startBreak) {
 
             case Infinitum.POSITION.CENTER:
 
-                leftBreakEdge = itemRect.left + (itemRect.width / 2);
+                startBreakEdge = itemRect.left + (itemRect.width / 2);
 
                 break;
 
             case Infinitum.POSITION.END:
 
-                leftBreakEdge = itemRect.right - 1;
+                startBreakEdge = itemRect.right - 1;
 
                 break;
         }
 
-        switch (this.options.rightBreak) {
+        switch (this.options.endBreak) {
 
             case Infinitum.POSITION.START:
 
-                rightBreakEdge = itemRect.left;
+                endBreakEdge = itemRect.left;
 
                 break;
 
             case Infinitum.POSITION.CENTER:
 
-                rightBreakEdge = itemRect.right - 1 - (itemRect.width / 2);
+                endBreakEdge = itemRect.right - 1 - (itemRect.width / 2);
 
                 break;
         }
 
         return {
-            left: leftBreakEdge,
-            right: rightBreakEdge
+            left: startBreakEdge,
+            right: endBreakEdge
         };
     };
 
@@ -1859,7 +1871,8 @@
                     if (!_this.options.breakAll) {
 
                         //nepřidávat na konec položky, které by byly až za pravým okrajem
-                        if (_this.endItemPosWill + addedWidth >= _this._selfRect.right) {
+                        //!!! + 1 může způsobovat problémy (původně to tam nebylo a fungovalo to :)
+                        if (_this.endItemPosWill + addedWidth + 1 >= _this._selfRect.right) {
 
                             return;
                         }

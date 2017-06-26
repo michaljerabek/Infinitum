@@ -656,8 +656,9 @@ example2.on("change", function (event) {
         }</pre>
 
                 <pre class="example__code example__js">var example3 = new Infinitum({
-    selector: ".example3__infinitum",
+    el: $(".example3__infinitum"),
     mode: Infinitum.POSITION.END,
+    endBreak: Infinitum.POSITION.END, //breaks end item immediately after its right edge overflows
     current: 0 //current item will be the first element (.example3__item)
 });
 
@@ -684,16 +685,14 @@ var lastEvent = Date.now();
 //speed up tab switching when scrolling, dragging or keys are used
 example3.on("scroll key tap dragging dragend", function (event) {
 
-    if (event.type === "tap" || event.type === "dragend" || Date.now() - lastEvent &gt; 500) {
+    if (event.type.match(/tap|dragend/) || Date.now() - lastEvent &gt; 500) {
 
         $tabsWrapper.removeClass("speed-up");
 
-        lastEvent = Date.now();
+    } else {
 
-        return;
+        $tabsWrapper.addClass("speed-up");
     }
-
-    $tabsWrapper.addClass("speed-up");
 
     lastEvent = Date.now();
 });</pre>
@@ -707,8 +706,9 @@ example3.on("scroll key tap dragging dragend", function (event) {
                 $(function () {
 
                     var example3 = window.example3 = new Infinitum({
-                        selector: ".example3__infinitum",
+                        el: $(".example3__infinitum"),
                         mode: Infinitum.POSITION.END,
+                        endBreak: Infinitum.POSITION.END,
                         current: 0
                     });
 
@@ -735,16 +735,14 @@ example3.on("scroll key tap dragging dragend", function (event) {
                     //speed up tab switching when scrolling, dragging or keys are used
                     example3.on("scroll key tap dragging dragend", function (event) {
 
-                        if (event.type === "tap" || event.type === "dragend" || Date.now() - lastEvent > 500) {
+                        if (event.type.match(/tap|dragend/) || Date.now() - lastEvent > 500) {
 
                             $tabsWrapper.removeClass("speed-up");
 
-                            lastEvent = Date.now();
+                        } else {
 
-                            return;
+                            $tabsWrapper.addClass("speed-up");
                         }
-
-                        $tabsWrapper.addClass("speed-up");
 
                         lastEvent = Date.now();
                     });
