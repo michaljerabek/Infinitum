@@ -831,9 +831,9 @@
 
         if (instances.length === 1) {
 
-            $win.on("touchstart." + NS, function (event) {
+            $win.on("touchmove." + NS, function (event) {
 
-                if (hasPointer.length && hasPointer.length !== event.originalEvent.touches.length) {
+                if (hasPointer.length) {
 
                     event.preventDefault();
                 }
@@ -1032,7 +1032,6 @@
         if (this._byTouch && this._fixVertical === null) {
 
             this._fixVertical = Math.abs(clientY - this._lastClientY) + 1 > Math.abs(diffX);
-
         }
 
         if (this._fixVertical) {
@@ -1871,8 +1870,8 @@
                     if (!_this.options.breakAll) {
 
                         //nepřidávat na konec položky, které by byly až za pravým okrajem
-                        //!!! + 1 může způsobovat problémy (původně to tam nebylo a fungovalo to :)
-                        if (_this.endItemPosWill + addedWidth + 1 >= _this._selfRect.right) {
+                        //!!! + 1 může způsobovat problémy (původně to tam nebylo a fungovalo to :) - taky tam bylo >=
+                        if (_this.endItemPosWill + addedWidth + 1 > _this._selfRect.right) {
 
                             return;
                         }
