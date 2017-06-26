@@ -1815,7 +1815,7 @@
     Infinitum.prototype._getBreakEdge = function (itemRect) {
 
         var startBreakEdge = itemRect.left,
-            endBreakEdge = itemRect.right - 1;
+            endBreakEdge = itemRect.right - 1/*0.5?*/;
 
         switch (this.options.startBreak) {
 
@@ -1827,7 +1827,7 @@
 
             case Infinitum.POSITION.END:
 
-                startBreakEdge = itemRect.right - 1;
+                startBreakEdge = itemRect.right - 1/*0.5?*/;
 
                 break;
         }
@@ -1842,7 +1842,7 @@
 
             case Infinitum.POSITION.CENTER:
 
-                endBreakEdge = itemRect.right - 1 - (itemRect.width / 2);
+                endBreakEdge = itemRect.right - 1/*0.5?*/ - (itemRect.width / 2);
 
                 break;
         }
@@ -1894,7 +1894,7 @@
 
                         //nepřidávat na konec položky, které by byly až za pravým okrajem
                         //!!! + 1 může způsobovat problémy (původně to tam nebylo a fungovalo to :) - taky tam bylo >=
-                        if (_this.endItemPosWill + addedWidth + 1 > _this._selfRect.right) {
+                        if (_this.endItemPosWill + addedWidth + 0.5 >= _this._selfRect.right) {
 
                             return;
                         }
@@ -1950,7 +1950,7 @@
                     if (!_this.options.breakAll) {
 
                         //nepřidávat na začátek položky, které byly až za levým okrajem
-                        if (_this.startItemPosWill - addedWidth - 1 <= _this._selfRect.left) {
+                        if (_this.startItemPosWill - addedWidth - 0.5 <= _this._selfRect.left) {
 
                             return;
                         }
@@ -2444,8 +2444,8 @@
 
             if (this.options.mode === POSITION.CENTER && this.options[option] === CURRENT.CLOSEST) {
 
-                thisLeftItemPos = willLeft - this._selfRect.center + 1;
-                thisRightItemPos = willRight - this._selfRect.center - 1;
+                thisLeftItemPos = willLeft - this._selfRect.center + 1; /*0.5?*/
+                thisRightItemPos = willRight - this._selfRect.center - 1; /*0.5?*/
 
             } else {
 
@@ -2489,7 +2489,7 @@
 
                 case CURRENT.FULL: return (currentLeft >= 0 && (prev === null || (Math.abs(currentLeft) < Math.abs(prev))));
 
-                case CURRENT.STILL_INSIDE: return (currentRight >= 1 /*0.5?*/ && (prev === null || (currentLeft < prev)));
+                case CURRENT.STILL_INSIDE: return (currentRight >= 0.5 && (prev === null || (currentLeft < prev)));
             }
 
         } else if (this.options.mode === POSITION.END) {
@@ -2500,7 +2500,7 @@
 
                 case CURRENT.FULL: return (currentRight <= 0 && (prev === null || (Math.abs(currentRight) < Math.abs(prev))));
 
-                case CURRENT.STILL_INSIDE: return (currentLeft <= -1 && (prev === null || (currentRight > prev)));
+                case CURRENT.STILL_INSIDE: return (currentLeft <= -0.5 && (prev === null || (currentRight > prev)));
             }
 
         } else {
