@@ -1496,11 +1496,11 @@
 
             $edgeItem = this.options.mode === POSITION.END ? this.$willEndItem : this.$willStartItem,
 
-            animationDoneAndCurrentNotOnEdge = animationDone && $edgeItem.length && !$edgeItem.hasClass(CLASS.current);
+            animationDoneAndCurrentNotOnEdge = animationDone && this.options.clearEdge && $edgeItem.length && !$edgeItem.hasClass(CLASS.current);
 
         if (this.options.mode === POSITION.CENTER && animationDoneAndCurrentNotOnEdge) {
 
-            animationDoneAndCurrentNotOnEdge = animationDone && this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
+            animationDoneAndCurrentNotOnEdge = animationDone && this.options.clearEdge && this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
         }
 
         if (this.options.mode === POSITION.START) {
@@ -1540,6 +1540,8 @@
 
             this._setPossibleCurrentItem(animationDone, x);
         }
+
+        this._lastTrackX = getTranslate(this.$track).x;
 
         //druhá část: opravuje položky, které nemusí být vždy vyváženě vyrovnané (_fixItemsPositions nefunguje)
         if ((!animationDone && animation) || (this.options.mode === POSITION.CENTER && animation && animationDone && !animationDoneAndCurrentNotOnEdge && this.options.balanced && this.$items.length > 2)) {
@@ -2126,8 +2128,6 @@
     Infinitum.prototype._animate = function () {
 
         this._move(getTranslate(this.$track).x - this._lastTrackX, true);
-
-        this._lastTrackX = getTranslate(this.$track).x;
     };
 
     /*
