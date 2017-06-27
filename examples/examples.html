@@ -1120,7 +1120,7 @@ example3.on("scroll key tap dragging dragend", function (event) {
 
                 <div class="example5__controls">
 
-                    <button class="example5__button example5__button--freeze" title="example5.freeze()">Freeze</button>
+                    <button class="example5__button example5__button--disable" title="example5.disable()">Disable</button>
 
                     <button class="example5__button example5__button--move example5__button--prev" title="example5.prev()">Previous</button>
 
@@ -1207,10 +1207,10 @@ $buttons.on("click touchend", function (event) {
         return;
     }
 
-    example5[example5.frozen ? "unfreeze" : "freeze"]();
+    example5[example5.disabled ? "enable" : "disable"]();
 
-    this.innerText = example5.frozen ? "Unfreeze" : "Freeze";
-    this.title = example5.frozen ? "example5.unfreeze()" : "example5.freeze()";
+    this.innerText = example5.disabled ? "Enable" : "Disable";
+    this.title = example5.disabled ? "example5.enable()" : "example5.disable()";
 });
 
 $select.on("change", function () {
@@ -1254,10 +1254,10 @@ example5.on("change", function (event) {
                             return;
                         }
 
-                        example5[example5.frozen ? "unfreeze" : "freeze"]();
+                        example5[example5.disabled ? "enable" : "disable"]();
 
-                        this.innerText = example5.frozen ? "Unfreeze" : "Freeze";
-                        this.title = example5.frozen ? "example5.unfreeze()" : "example5.freeze()";
+                        this.innerText = example5.disabled ? "Enable" : "Disable";
+                        this.title = example5.disabled ? "example5.enable()" : "example5.disable()";
                     });
 
                     $select.on("change", function () {

@@ -644,8 +644,8 @@ body {
     transition: filter 0.25s ease;
 }
 
-.example5__infinitum.infinitum--frozen {
-    filter: sepia(1) hue-rotate(158deg) saturate(0.85);
+.example5__infinitum.infinitum--disabled {
+    filter: sepia(1) hue-rotate(158deg) saturate(0.75);
 }
 
 .example5__infinitum:hover,
@@ -718,7 +718,7 @@ body {
         outline: none
     }
 
-    .example5__button--freeze {
+    .example5__button--disable {
         padding-right: 12px;
         margin-right: auto;
     }
