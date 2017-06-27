@@ -135,7 +135,7 @@
 
     var CLASS = {
         self: "infinitum",
-        frozen: "infinitum--frozen",
+        disabled: "infinitum--disabled",
         start: "infinitum--start",
         end: "infinitum--end",
         center: "infinitum--center",
@@ -411,7 +411,7 @@
 
         this.$self.removeAttr("data-" + DATA.url)
             .removeClass(CLASS.self)
-            .removeClass(CLASS.frozen)
+            .removeClass(CLASS.disabled)
             .removeClass(this.options.mode === POSITION.START ? CLASS.start :
                 this.options.mode === POSITION.END ? CLASS.end : CLASS.center)
             .removeClass(CLASS.debug);
@@ -538,21 +538,21 @@
     /*
      * Aktivní položku nebude možné změnit tapnutím, klávesou ani kolečkem (programaticky ano).
      */
-    Infinitum.prototype.freeze = function () {
+    Infinitum.prototype.disable = function () {
 
-        this.$self.addClass(CLASS.frozen);
+        this.$self.addClass(CLASS.disabled);
 
-        this.frozen = true;
+        this.disabled = true;
     };
 
     /*
-     * Zruší freeze.
+     * Zruší disable.
      */
-    Infinitum.prototype.unfreeze = function () {
+    Infinitum.prototype.enable = function () {
 
-        this.$self.removeClass(CLASS.frozen);
+        this.$self.removeClass(CLASS.disabled);
 
-        this.frozen = false;
+        this.disabled = false;
     };
 
     /*
@@ -870,7 +870,7 @@
         this.$self.on("click" + this.NS, CLASS.selector("item"), function (event) {
 
             //"kliknutí" enterem
-            if (!this._byMouse && !this._byTouch && !this.frozen) {
+            if (!this._byMouse && !this._byTouch && !this.disabled) {
 
                 this._onPointerEnd(event);
             }
@@ -885,7 +885,7 @@
 
         this.$self.on("keydown" + this.NS, function (event) {
 
-            if (this.frozen || keydownThrottle || [37, 38, 39, 40].indexOf(event.which) === -1) {
+            if (this.disabled || keydownThrottle || [37, 38, 39, 40].indexOf(event.which) === -1) {
 
                 return;
             }
@@ -904,7 +904,7 @@
         //zachytávat události kolečka, pouze pokud uživatel neposouvá stránku (= allowWheel)
         $win.on("scroll" + this.NS, function (event) {
 
-            if (this.frozen || event.target !== document) {
+            if (this.disabled || event.target !== document) {
 
                 return;
             }
@@ -921,7 +921,7 @@
 
         this.$self.on("mousewheel" + this.NS + " DOMMouseScroll" + this.NS, function (event) {
 
-            if (!allowWheel || this.frozen) {
+            if (!allowWheel || this.disabled) {
 
                 return;
             }
@@ -975,7 +975,7 @@
 
     Infinitum.prototype._onPointerStart = function (event) {
 
-        if (this.frozen) {
+        if (this.disabled) {
 
             return;
         }
@@ -1208,7 +1208,7 @@
 
     Infinitum.prototype._onWheel = function (event) {
 
-        if (this.frozen) {
+        if (this.disabled) {
 
             return;
         }
@@ -1249,7 +1249,7 @@
 
     Infinitum.prototype._onKey = function (event) {
 
-        if (this.frozen) {
+        if (this.disabled) {
 
             return;
         }

@@ -135,7 +135,7 @@
 
     var CLASS = {
         self: "infinitum",
-        frozen: "infinitum--frozen",
+        disabled: "infinitum--disabled",
         start: "infinitum--start",
         end: "infinitum--end",
         center: "infinitum--center",
@@ -411,7 +411,7 @@
 
         this.$self.removeAttr("data-" + DATA.url)
             .removeClass(CLASS.self)
-            .removeClass(CLASS.frozen)
+            .removeClass(CLASS.disabled)
             .removeClass(this.options.mode === POSITION.START ? CLASS.start :
                 this.options.mode === POSITION.END ? CLASS.end : CLASS.center)
             .removeClass(CLASS.debug);
@@ -538,21 +538,21 @@
     /*
      * Aktivní položku nebude možné změnit tapnutím, klávesou ani kolečkem (programaticky ano).
      */
-    Infinitum.prototype.freeze = function () {
+    Infinitum.prototype.disable = function () {
 
-        this.$self.addClass(CLASS.frozen);
+        this.$self.addClass(CLASS.disabled);
 
-        this.frozen = true;
+        this.disabled = true;
     };
 
     /*
-     * Zruší freeze.
+     * Zruší disable.
      */
-    Infinitum.prototype.unfreeze = function () {
+    Infinitum.prototype.enable = function () {
 
-        this.$self.removeClass(CLASS.frozen);
+        this.$self.removeClass(CLASS.disabled);
 
-        this.frozen = false;
+        this.disabled = false;
     };
 
     /*
@@ -870,7 +870,7 @@
         this.$self.on("click" + this.NS, CLASS.selector("item"), function (event) {
 
             //"kliknutí" enterem
-            if (!this._byMouse && !this._byTouch && !this.frozen) {
+            if (!this._byMouse && !this._byTouch && !this.disabled) {
 
                 this._onPointerEnd(event);
             }
@@ -885,7 +885,7 @@
 
         this.$self.on("keydown" + this.NS, function (event) {
 
-            if (this.frozen || keydownThrottle || [37, 38, 39, 40].indexOf(event.which) === -1) {
+            if (this.disabled || keydownThrottle || [37, 38, 39, 40].indexOf(event.which) === -1) {
 
                 return;
             }
@@ -904,7 +904,7 @@
         //zachytávat události kolečka, pouze pokud uživatel neposouvá stránku (= allowWheel)
         $win.on("scroll" + this.NS, function (event) {
 
-            if (this.frozen || event.target !== document) {
+            if (this.disabled || event.target !== document) {
 
                 return;
             }
@@ -921,7 +921,7 @@
 
         this.$self.on("mousewheel" + this.NS + " DOMMouseScroll" + this.NS, function (event) {
 
-            if (!allowWheel || this.frozen) {
+            if (!allowWheel || this.disabled) {
 
                 return;
             }
@@ -975,7 +975,7 @@
 
     Infinitum.prototype._onPointerStart = function (event) {
 
-        if (this.frozen) {
+        if (this.disabled) {
 
             return;
         }
@@ -1208,7 +1208,7 @@
 
     Infinitum.prototype._onWheel = function (event) {
 
-        if (this.frozen) {
+        if (this.disabled) {
 
             return;
         }
@@ -1249,7 +1249,7 @@
 
     Infinitum.prototype._onKey = function (event) {
 
-        if (this.frozen) {
+        if (this.disabled) {
 
             return;
         }
@@ -1815,7 +1815,7 @@
     Infinitum.prototype._getBreakEdge = function (itemRect) {
 
         var startBreakEdge = itemRect.left,
-            endBreakEdge = itemRect.right - 1;
+            endBreakEdge = itemRect.right - 1/*0.5?*/;
 
         switch (this.options.startBreak) {
 
@@ -1827,7 +1827,7 @@
 
             case Infinitum.POSITION.END:
 
-                startBreakEdge = itemRect.right - 1;
+                startBreakEdge = itemRect.right - 1/*0.5?*/;
 
                 break;
         }
@@ -1842,7 +1842,7 @@
 
             case Infinitum.POSITION.CENTER:
 
-                endBreakEdge = itemRect.right - 1 - (itemRect.width / 2);
+                endBreakEdge = itemRect.right - 1/*0.5?*/ - (itemRect.width / 2);
 
                 break;
         }
@@ -1894,7 +1894,7 @@
 
                         //nepřidávat na konec položky, které by byly až za pravým okrajem
                         //!!! + 1 může způsobovat problémy (původně to tam nebylo a fungovalo to :) - taky tam bylo >=
-                        if (_this.endItemPosWill + addedWidth + 1 > _this._selfRect.right) {
+                        if (_this.endItemPosWill + addedWidth + 0.5 >= _this._selfRect.right) {
 
                             return;
                         }
@@ -1950,7 +1950,7 @@
                     if (!_this.options.breakAll) {
 
                         //nepřidávat na začátek položky, které byly až za levým okrajem
-                        if (_this.startItemPosWill - addedWidth - 1 <= _this._selfRect.left) {
+                        if (_this.startItemPosWill - addedWidth - 0.5 <= _this._selfRect.left) {
 
                             return;
                         }
@@ -2444,8 +2444,8 @@
 
             if (this.options.mode === POSITION.CENTER && this.options[option] === CURRENT.CLOSEST) {
 
-                thisLeftItemPos = willLeft - this._selfRect.center + 1;
-                thisRightItemPos = willRight - this._selfRect.center - 1;
+                thisLeftItemPos = willLeft - this._selfRect.center + 1; /*0.5?*/
+                thisRightItemPos = willRight - this._selfRect.center - 1; /*0.5?*/
 
             } else {
 
@@ -2489,7 +2489,7 @@
 
                 case CURRENT.FULL: return (currentLeft >= 0 && (prev === null || (Math.abs(currentLeft) < Math.abs(prev))));
 
-                case CURRENT.STILL_INSIDE: return (currentRight >= 1 /*0.5?*/ && (prev === null || (currentLeft < prev)));
+                case CURRENT.STILL_INSIDE: return (currentRight >= 0.5 && (prev === null || (currentLeft < prev)));
             }
 
         } else if (this.options.mode === POSITION.END) {
@@ -2500,7 +2500,7 @@
 
                 case CURRENT.FULL: return (currentRight <= 0 && (prev === null || (Math.abs(currentRight) < Math.abs(prev))));
 
-                case CURRENT.STILL_INSIDE: return (currentLeft <= -1 && (prev === null || (currentRight > prev)));
+                case CURRENT.STILL_INSIDE: return (currentLeft <= -0.5 && (prev === null || (currentRight > prev)));
             }
 
         } else {
