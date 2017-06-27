@@ -645,7 +645,7 @@ body {
 }
 
 .example5__infinitum.infinitum--disabled {
-    filter: sepia(1) hue-rotate(158deg) saturate(0.75);
+    filter: sepia(1) hue-rotate(163deg) saturate(0.75);
 }
 
 .example5__infinitum:hover,
