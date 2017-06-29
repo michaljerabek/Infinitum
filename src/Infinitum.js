@@ -1498,11 +1498,13 @@
 
             $edgeItem = this.options.mode === POSITION.END ? this.$willEndItem : this.$willStartItem,
 
-            animationDoneAndCurrentNotOnEdge = animationDone && (this.options.clearEdge || this.options.mode === POSITION.CENTER) && $edgeItem.length && !$edgeItem.hasClass(CLASS.current);
+            animationDoneAndCurrentNotOnEdge = animationDone && (this.options.clearEdge || this.options.mode === POSITION.CENTER) && $edgeItem.length && !$edgeItem.hasClass(CLASS.current),
+
+            animationDoneAndCurrentNotOnEndEdge = true;
 
         if (this.options.mode === POSITION.CENTER && animationDoneAndCurrentNotOnEdge) {
 
-            animationDoneAndCurrentNotOnEdge = animationDone && this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
+            animationDoneAndCurrentNotOnEndEdge = animationDone && this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
         }
 
         if (this.options.mode === POSITION.START) {
@@ -1528,11 +1530,11 @@
             }
         } else {
 
-            if (x < 0) {
+            if (x < 0 || (!x && !animationDoneAndCurrentNotOnEndEdge)) {
 
                 this._moveLeftItemsOverToTheEnd(animationDone);
 
-            } else if (x > 0 || fakeMove) {
+            } else if (x > 0 || (fakeMove || (!x && !animationDoneAndCurrentNotOnEdge))) {
 
                 this._moveRightItemsOverToTheStart(animationDone);
             }
@@ -1543,8 +1545,8 @@
             this._setPossibleCurrentItem(animationDone, x);
         }
 
-        //druhá část: opravuje položky, které nemusí být vždy vyváženě vyrovnané (_fixItemsPositions nefunguje)
-        if ((!animationDone && animation) || (this.options.mode === POSITION.CENTER && animation && animationDone && !animationDoneAndCurrentNotOnEdge && this.options.balanced && this.$items.length > 2)) {
+        //druhá část: opravuje položky, které nemusí být vždy vyváženě vyrovnané
+        if ((!animationDone && animation) || (this.options.mode === POSITION.CENTER && animation && animationDone && (!animationDoneAndCurrentNotOnEdge || !animationDoneAndCurrentNotOnEndEdge) && this.options.balanced && this.$items.length > 2)) {
 
             requestAnimationFrame(this._animate);
 
@@ -1553,7 +1555,7 @@
 
         if (animationDone) {
 
-            if (!fakeMove && this.options.mode !== POSITION.CENTER && animationDoneAndCurrentNotOnEdge) {
+            if (!fakeMove && animationDoneAndCurrentNotOnEdge) {
 
                 this._fixItemsPositions();
             }
