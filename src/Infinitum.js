@@ -3,6 +3,32 @@
 
 (function ($) {
 
+    //https://gist.github.com/paulirish/1579671
+    (function() {
+        var lastTime = 0;
+        var vendors = ['ms', 'moz', 'webkit', 'o'];
+        for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+            window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+            window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+                || window[vendors[x]+'CancelRequestAnimationFrame'];
+        }
+
+        if (!window.requestAnimationFrame)
+            window.requestAnimationFrame = function(callback, element) {
+                var currTime = new Date().getTime();
+                var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+                var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+                                           timeToCall);
+                lastTime = currTime + timeToCall;
+                return id;
+            };
+
+        if (!window.cancelAnimationFrame)
+            window.cancelAnimationFrame = function(id) {
+                clearTimeout(id);
+            };
+    }());
+
     var TRANSFORM_PREFIX = "",
 
         TRANSFORM_PROP = (function () {
@@ -71,7 +97,6 @@
             return null;
 
         }());
-
 
     var getCurrentMatrix = function ($element) {
 
@@ -286,6 +311,11 @@
     };
 
 
+    $.easing["easeOutQuad." + NS] = function (x) {
+        return 1 - ( 1 - x ) * ( 1 - x );
+    };
+
+
     var hasPointer = [],
 
         instances = [],
@@ -418,10 +448,12 @@
 
         var trackCSS = {};
 
+        trackCSS.textIndent = "";
         trackCSS[TRANSFORM_PROP] = "";
         trackCSS[TRANSITION_PROP + "Duration"] = "";
 
-        this.$track.css(trackCSS)
+        this.$track.stop(true, true)
+            .css(trackCSS)
             .off(this.NS, "")
             .removeClass(CLASS.track)
             .removeClass(CLASS.dragging)
@@ -687,6 +719,11 @@
         }
 
         this.options = $.extend({}, _DEFAULTS || DEFAULTS, this.options === options ? {} : this.options, options);
+
+        if (!TRANSITIONEND) {
+
+            this.options.fade = false;
+        }
     };
 
     Infinitum.prototype._prepareSelf = function () {
@@ -1220,7 +1257,7 @@
         this._shouldCancelRAF = true;
         cancelAnimationFrame(this._animate);
 
-        this._lastDir = (event.originalEvent.detail || event.originalEvent.deltaY || event.originalEvent.deltaX) > 0 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
+        this._lastDir = (event.originalEvent.detail || event.originalEvent.deltaY || event.originalEvent.deltaX || -event.originalEvent.wheelDelta) > 0 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
 
         var $item = this._lastDir === Infinitum.DIR.LEFT ? this.findNext() : this.findPrev();
 
@@ -1348,9 +1385,36 @@
             fakeTransitionEnd = setTimeout(onTransitonEnd, speed + 50);
 
             this.$track.data(DATA.fakeTransitionTimeout + this.NS, fakeTransitionEnd);
+
+            if (!TRANSITIONEND) {
+
+                var initX = getTranslate(this.$track).x;
+
+                this.$track.stop(true)
+                    .css({ textIndent: 0 })
+                    .animate({ textIndent: 1 }, {
+                        duration: speed,
+                        easing: "easeOutQuad." + NS,
+
+                        step: function (step) {
+
+                            var CSS = {};
+
+                            CSS[TRANSFORM_PROP] = "translateX(" + (initX + ((position - initX) * step)) + "px)";
+
+                            this.$track.css(CSS);
+
+                        }.bind(this),
+
+                        complete: onTransitonEnd
+                    });
+            }
         }
 
-        this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + position + "px, 0px, 0px)" : "translateX(" + position + "px)");
+        if (TRANSITIONEND || !animate) {
+
+            this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + position + "px, 0px, 0px)" : "translateX(" + position + "px)");
+        }
 
         this.$track.data(DATA.willTranslate + this.NS, position);
 
@@ -1498,11 +1562,13 @@
 
             $edgeItem = this.options.mode === POSITION.END ? this.$willEndItem : this.$willStartItem,
 
-            animationDoneAndCurrentNotOnEdge = animationDone && (this.options.clearEdge || this.options.mode === POSITION.CENTER) && $edgeItem.length && !$edgeItem.hasClass(CLASS.current);
+            animationDoneAndCurrentNotOnEdge = animationDone && (this.options.clearEdge || this.options.mode === POSITION.CENTER) && $edgeItem.length && !$edgeItem.hasClass(CLASS.current),
+
+            animationDoneAndCurrentNotOnEndEdge = true;
 
         if (this.options.mode === POSITION.CENTER && animationDoneAndCurrentNotOnEdge) {
 
-            animationDoneAndCurrentNotOnEdge = animationDone && this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
+            animationDoneAndCurrentNotOnEndEdge = animationDone && this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
         }
 
         if (this.options.mode === POSITION.START) {
@@ -1528,11 +1594,11 @@
             }
         } else {
 
-            if (x < 0) {
+            if (x < 0 || (!x && !animationDoneAndCurrentNotOnEndEdge)) {
 
                 this._moveLeftItemsOverToTheEnd(animationDone);
 
-            } else if (x > 0 || fakeMove) {
+            } else if (x > 0 || (fakeMove || (!x && !animationDoneAndCurrentNotOnEdge))) {
 
                 this._moveRightItemsOverToTheStart(animationDone);
             }
@@ -1543,8 +1609,8 @@
             this._setPossibleCurrentItem(animationDone, x);
         }
 
-        //druhá část: opravuje položky, které nemusí být vždy vyváženě vyrovnané (_fixItemsPositions nefunguje)
-        if ((!animationDone && animation) || (this.options.mode === POSITION.CENTER && animation && animationDone && !animationDoneAndCurrentNotOnEdge && this.options.balanced && this.$items.length > 2)) {
+        //druhá část: opravuje položky, které nemusí být vždy vyváženě vyrovnané
+        if ((!animationDone && animation) || (this.options.mode === POSITION.CENTER && animation && animationDone && (!animationDoneAndCurrentNotOnEdge || !animationDoneAndCurrentNotOnEndEdge) && this.options.balanced && this.$items.length > 2)) {
 
             requestAnimationFrame(this._animate);
 
@@ -1553,7 +1619,7 @@
 
         if (animationDone) {
 
-            if (!fakeMove && this.options.mode !== POSITION.CENTER && animationDoneAndCurrentNotOnEdge) {
+            if (!fakeMove && animationDoneAndCurrentNotOnEdge) {
 
                 this._fixItemsPositions();
             }
