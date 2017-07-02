@@ -79,14 +79,14 @@
         transition-duration: 0.175s;
 }
 
-    .infinitum__track--medium infinitum__item {
+    .infinitum__track--medium .infinitum__item {
         -webkit-transition-duration: 0.25s;
         -moz-transition-duration: 0.25s;
         -o-transition-duration: 0.25s;
         transition-duration: 0.25s;
 }
 
-    .infinitum__track--medium infinitum__item--hide {
+    .infinitum__track--medium .infinitum__item--hide {
         -webkit-transition-duration: 0.125s;
         -moz-transition-duration: 0.125s;
         -o-transition-duration: 0.125s;
