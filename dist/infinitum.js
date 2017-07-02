@@ -348,6 +348,8 @@
 
         this._lastTrackX = 0;
 
+        this._lastFadeSpeed = -1;
+
         this.startItemPosWill = 0;
         this.endItemPosWill = 0;
 
@@ -1478,10 +1480,12 @@
 
         if (noFade) {
 
-            if (this.$track.hasClass(CLASS.speed0)) {
+            if (this._lastFadeSpeed === 0) {
 
                 return;
             }
+
+            this._lastFadeSpeed = 0;
 
             this.$track
                 .removeClass(CLASS.speed1)
@@ -1501,12 +1505,14 @@
 
         var avgSpeed = this._getAvgSpeed();
 
-        if (avgSpeed < 10) {
+        if (avgSpeed < 8) {
 
-            if (this.$track.hasClass(CLASS.speed1)) {
+            if (this._lastFadeSpeed === 1) {
 
                 return;
             }
+
+            this._lastFadeSpeed = 1;
 
             this.$track
                 .removeClass(CLASS.speed0)
@@ -1514,12 +1520,14 @@
                 .removeClass(CLASS.speed3)
                 .addClass(CLASS.speed1);
 
-        } else if (avgSpeed < 20) {
+        } else if (avgSpeed < 16) {
 
-            if (this.$track.hasClass(CLASS.speed2)) {
+            if (this._lastFadeSpeed === 2) {
 
                 return;
             }
+
+            this._lastFadeSpeed = 2;
 
             this.$track
                 .removeClass(CLASS.speed0)
@@ -1529,10 +1537,12 @@
 
         } else {
 
-            if (this.$track.hasClass(CLASS.speed3)) {
+            if (this._lastFadeSpeed === 3) {
 
                 return;
             }
+
+            this._lastFadeSpeed = 3;
 
             this.$track
                 .removeClass(CLASS.speed0)
