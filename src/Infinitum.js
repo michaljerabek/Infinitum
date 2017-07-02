@@ -1494,7 +1494,7 @@
 
         if (move) {
 
-            this._speed = this._speed.slice(0, 4);
+            this._speed = this._speed.slice(0, 5);
 
             this._speed.unshift(Math.abs(move));
         }
