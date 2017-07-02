@@ -1008,7 +1008,10 @@ example3.on("scroll key tap dragging dragend", function (event) {
     fade: false, //no fade effect (won't be visible)
     currentIn: Infinitum.CURRENT.STILL_INSIDE, //as current will be used the item, which is in the center of the widget; Infinitum.CURRENT.FULL has the same effect
     currentOut: Infinitum.CURRENT.STILL_INSIDE, //not necessary; it will use value from the currentIn option, because mode is Infinitum.POSITION.CENTER
-    current: 0
+    current: 0,
+
+    keyThrottle: 60,
+    wheelThrottle: 25
 });</pre>
 
             </section>
@@ -1025,7 +1028,10 @@ example3.on("scroll key tap dragging dragend", function (event) {
                         fade: false,
                         currentIn: Infinitum.CURRENT.STILL_INSIDE,
                         currentOut: Infinitum.CURRENT.STILL_INSIDE,
-                        current: 0
+                        current: 0,
+
+                        keyThrottle: 60,
+                        wheelThrottle: 25
                     });
 
                     var example4_2 = window.example4_2 = new Infinitum({
@@ -1033,7 +1039,10 @@ example3.on("scroll key tap dragging dragend", function (event) {
                         mode: Infinitum.POSITION.CENTER,
                         fade: false,
                         currentIn: Infinitum.CURRENT.STILL_INSIDE,
-                        currentOut: Infinitum.CURRENT.STILL_INSIDE
+                        currentOut: Infinitum.CURRENT.STILL_INSIDE,
+
+                        keyThrottle: 60,
+                        wheelThrottle: 25
                     });
                 });
 
