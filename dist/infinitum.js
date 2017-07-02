@@ -307,6 +307,14 @@
          */
         refreshItems: true,
 
+        /* Number - throttling ovládání klávesami
+         */
+        keyThrottle: 75,
+
+        /* Number - throttling ovládání kolečkem
+         */
+        wheelThrottle: 40,
+
         debug: false
     };
 
@@ -320,7 +328,10 @@
 
         instances = [],
 
-        idCounter = 1;
+        idCounter = 1,
+
+        scrollDebounce = null,
+        allowWheel = true;
 
     var Infinitum = window.Infinitum = function Infinitum(options) {
 
@@ -373,8 +384,6 @@
     Infinitum.FAKE_TRANSITION_TIMEOUT = 700;
 
     Infinitum.CAPTURE_WHEEL_TIMEOUT = 350;
-    Infinitum.KEY_THROTTLE = 75;
-    Infinitum.WHEEL_THROTTLE = 40;
 
     Infinitum.prototype.init = function (options /*Object?*/, destroy /*Boolean?*/) {
 
@@ -900,6 +909,22 @@
                     event.preventDefault();
                 }
             });
+
+            //zachytávat události kolečka, pouze pokud uživatel neposouvá stránku (= allowWheel)
+            $win.on("scroll." + NS, function (event) {
+
+                if (event.target !== document) {
+
+                    return;
+                }
+
+                allowWheel = false;
+
+                clearTimeout(scrollDebounce);
+
+                scrollDebounce = setTimeout(function() { allowWheel = true; }, Infinitum.CAPTURE_WHEEL_TIMEOUT);
+
+            }.bind(this));
         }
 
         this.$self.on("mousedown" + this.NS + " touchstart" + this.NS, this._onPointerStart.bind(this));
@@ -929,28 +954,9 @@
 
             keydownThrottle = true;
 
-            setTimeout(function() { keydownThrottle = false; }, Infinitum.KEY_THROTTLE);
+            setTimeout(function() { keydownThrottle = false; }, this.options.keyThrottle);
 
             this._onKey(event);
-
-        }.bind(this));
-
-        var scrollDebounce = null,
-            allowWheel = true;
-
-        //zachytávat události kolečka, pouze pokud uživatel neposouvá stránku (= allowWheel)
-        $win.on("scroll" + this.NS, function (event) {
-
-            if (this.disabled || event.target !== document) {
-
-                return;
-            }
-
-            allowWheel = false;
-
-            clearTimeout(scrollDebounce);
-
-            scrollDebounce = setTimeout(function() { allowWheel = true; }, Infinitum.CAPTURE_WHEEL_TIMEOUT);
 
         }.bind(this));
 
@@ -972,7 +978,7 @@
 
             wheelThrottle = true;
 
-            setTimeout(function() { wheelThrottle = false; }, Infinitum.WHEEL_THROTTLE);
+            setTimeout(function() { wheelThrottle = false; }, this.options.wheelThrottle);
 
             this._onWheel(event);
 
@@ -1006,7 +1012,8 @@
 
         if (!instances.length) {
 
-            $win.off("touchstart." + NS);
+            $win.off("touchstart." + NS)
+                .off("scroll." + NS);
         }
     };
 
