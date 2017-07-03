@@ -70,42 +70,42 @@
         -moz-transition-duration: 0.35s;
         -o-transition-duration: 0.35s;
         transition-duration: 0.35s;
-}
+    }
 
     .infinitum__track--slow .infinitum__item--hide {
         -webkit-transition-duration: 0.175s;
         -moz-transition-duration: 0.175s;
         -o-transition-duration: 0.175s;
         transition-duration: 0.175s;
-}
+    }
 
     .infinitum__track--medium .infinitum__item {
         -webkit-transition-duration: 0.25s;
         -moz-transition-duration: 0.25s;
         -o-transition-duration: 0.25s;
         transition-duration: 0.25s;
-}
+    }
 
     .infinitum__track--medium .infinitum__item--hide {
         -webkit-transition-duration: 0.125s;
         -moz-transition-duration: 0.125s;
         -o-transition-duration: 0.125s;
         transition-duration: 0.125s;
-}
+    }
 
     .infinitum__track--fast .infinitum__item {
         -webkit-transition-duration: 0.15s;
         -moz-transition-duration: 0.15s;
         -o-transition-duration: 0.15s;
         transition-duration: 0.15s;
-}
+    }
 
     .infinitum__track--fast .infinitum__item--hide {
         -webkit-transition-duration: 0.075s;
         -moz-transition-duration: 0.075s;
         -o-transition-duration: 0.075s;
         transition-duration: 0.075s;
-}
+    }
 
 /*---------------------------- DEBUG ----------------------------*/
 
