@@ -137,7 +137,7 @@
 
     getRect = function (element) {
 
-            return (element instanceof HTMLElement ? element : element[0]).getBoundingClientRect();
+        return (element instanceof HTMLElement ? element : element[0]).getBoundingClientRect();
     },
 
     $t = (function() {
@@ -320,7 +320,7 @@
 
 
     $.easing["easeOutQuad." + NS] = function (x) {
-        return 1 - ( 1 - x ) * ( 1 - x );
+        return 1 - (1 - x) * (1 - x);
     };
 
 
@@ -1584,18 +1584,10 @@
 
         var animationDone = animation && this._shouldCancelRAF && (!x || this._forceCancelRAF),
 
-            $edgeItem = this.options.mode === POSITION.END ? this.$willEndItem : this.$willStartItem,
+            animationDoneAndCurrentNotOnStartEdge = animationDone && !this.$willStartItem.hasClass(CLASS.current),
+            animationDoneAndCurrentNotOnEndEdge = animationDone && !this.$willEndItem.hasClass(CLASS.current);
 
-            animationDoneAndCurrentNotOnEdge = animationDone && (this.options.clearEdge || this.options.mode === POSITION.CENTER) && $edgeItem.length && !$edgeItem.hasClass(CLASS.current),
-
-            animationDoneAndCurrentNotOnEndEdge = true;
-
-        if (this.options.mode === POSITION.CENTER && animationDoneAndCurrentNotOnEdge) {
-
-            animationDoneAndCurrentNotOnEndEdge = animationDone && this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
-        }
-
-        this._moveItemsOverToTheOtherSide(x, animationDone, animationDoneAndCurrentNotOnEdge, animationDoneAndCurrentNotOnEndEdge, fakeMove);
+        this._moveItemsOverToTheOtherSide(x, animationDone, animationDoneAndCurrentNotOnStartEdge, animationDoneAndCurrentNotOnEndEdge, fakeMove);
 
         if (!fakeMove) {
 
@@ -1603,7 +1595,7 @@
         }
 
         //druhá část: opravuje položky, které nemusí být vždy vyváženě vyrovnané
-        if ((!animationDone && animation) || (this.options.mode === POSITION.CENTER && animation && animationDone && (!animationDoneAndCurrentNotOnEdge || !animationDoneAndCurrentNotOnEndEdge) && this.options.balanced && this.$items.length > 2)) {
+        if (animation && (!animationDone || (this.options.mode === POSITION.CENTER && animationDone && (!animationDoneAndCurrentNotOnStartEdge || !animationDoneAndCurrentNotOnEndEdge) && this.options.balanced && this.$items.length > 2))) {
 
             requestAnimationFrame(this._animate);
 
@@ -1612,7 +1604,7 @@
 
         if (animationDone) {
 
-            if (!fakeMove && animationDoneAndCurrentNotOnEdge) {
+            if (!fakeMove && ((this.options.clearEdge || this.options.mode === POSITION.CENTER) && (animationDoneAndCurrentNotOnStartEdge || animationDoneAndCurrentNotOnEndEdge))) {
 
                 this._fixItemsPositions();
             }
@@ -1621,13 +1613,13 @@
         }
     };
 
-    Infinitum.prototype._moveItemsOverToTheOtherSide = function (x, animationDone, animationDoneAndCurrentNotOnEdge, animationDoneAndCurrentNotOnEndEdge, fakeMove) {
+    Infinitum.prototype._moveItemsOverToTheOtherSide = function (x, animationDone, animationDoneAndCurrentNotOnStartEdge, animationDoneAndCurrentNotOnEndEdge, fakeMove) {
 
         if (this.options.mode === POSITION.START) {
 
-            if (x < 0 || ((animationDoneAndCurrentNotOnEdge || fakeMove) && this.options.clearEdge)) {
+            if (x < 0 || (((/*this.options.clearEdge && */animationDoneAndCurrentNotOnStartEdge) || fakeMove) && this.options.clearEdge)) {
 
-                this._moveLeftItemsOverToTheEnd(animationDone, animationDoneAndCurrentNotOnEdge, fakeMove);
+                this._moveLeftItemsOverToTheEnd(animationDone, animationDoneAndCurrentNotOnStartEdge, fakeMove);
 
             } else if (x > 0) {
 
@@ -1636,9 +1628,9 @@
 
         } else if (this.options.mode === POSITION.END) {
 
-            if (x > 0 || ((animationDoneAndCurrentNotOnEdge || fakeMove) && this.options.clearEdge)) {
+            if (x > 0 || (((/*this.options.clearEdge && */animationDoneAndCurrentNotOnEndEdge) || fakeMove) && this.options.clearEdge)) {
 
-                this._moveRightItemsOverToTheStart(animationDone, animationDoneAndCurrentNotOnEdge, fakeMove);
+                this._moveRightItemsOverToTheStart(animationDone, animationDoneAndCurrentNotOnEndEdge, fakeMove);
 
             } else if (x < 0) {
 
@@ -1650,7 +1642,7 @@
 
                 this._moveLeftItemsOverToTheEnd(animationDone);
 
-            } else if (x > 0 || (fakeMove || (!x && !animationDoneAndCurrentNotOnEdge))) {
+            } else if (x > 0 || (fakeMove || (!x && !animationDoneAndCurrentNotOnStartEdge))) {
 
                 this._moveRightItemsOverToTheStart(animationDone);
             }
@@ -2003,12 +1995,12 @@
                 }
             }
 
-            if (animationDoneAndCurrentNotFirst && ($this.hasClass(CLASS.current) || (!_this.options.clearEdge && !byFakeMove))) {
+            if ((_this.options.clearEdge && animationDoneAndCurrentNotFirst) && ($this.hasClass(CLASS.current) || (!_this.options.clearEdge && !byFakeMove))) {
 
                 return;
             }
 
-            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toStart) || animationDoneAndCurrentNotFirst || byFakeMove) {
+            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toStart) || (_this.options.clearEdge && animationDoneAndCurrentNotFirst) || byFakeMove) {
 
                 addedWidth += width;
 
@@ -2070,12 +2062,12 @@
                 }
             }
 
-            if (animationDoneAndCurrentNotLast && ($this.hasClass(CLASS.current) || (!_this.options.clearEdge && !byFakeMove))) {
+            if ((_this.options.clearEdge && animationDoneAndCurrentNotLast) && ($this.hasClass(CLASS.current) || (!_this.options.clearEdge && !byFakeMove))) {
 
                 return;
             }
 
-            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toEnd) || animationDoneAndCurrentNotLast || byFakeMove) {
+            if (!$this.hasClass(CLASS.hide) || $this.hasClass(CLASS.toEnd) || (_this.options.clearEdge && animationDoneAndCurrentNotLast) || byFakeMove) {
 
                 addedWidth += width;
 
