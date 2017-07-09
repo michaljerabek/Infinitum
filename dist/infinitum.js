@@ -1242,13 +1242,20 @@
 
             this._lastDir = currentPos > tappedPos ? Infinitum.DIR.RIGHT : Infinitum.DIR.LEFT;
 
-            if (this.options.wheelKeysTapSetCurrent) {
+            if (this.$currentItem[0] === $item[0]) {
 
-                this._setCurrent($item, false);
+                this._setPossibleCurrentItem(true);
 
             } else {
 
-                this._moveToItem($item, false);
+                if (this.options.wheelKeysTapSetCurrent) {
+
+                    this._setCurrent($item, false);
+
+                } else {
+
+                    this._moveToItem($item, false);
+                }
             }
         }
 
