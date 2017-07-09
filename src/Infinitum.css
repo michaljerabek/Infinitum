@@ -32,10 +32,10 @@
             -moz-transition-timing-function: ease-out;
             -o-transition-timing-function: ease-out;
             transition-timing-function: ease-out;
-            -webkit-transition-duration: 0.4s;
-            -moz-transition-duration: 0.4s;
-            -o-transition-duration: 0.4s;
-            transition-duration: 0.4s;
+            -webkit-transition-duration: 0.25s;
+            -moz-transition-duration: 0.25s;
+            -o-transition-duration: 0.25s;
+            transition-duration: 0.25s;
             will-change: opacity;
 
             touch-action: manipulation;
@@ -49,10 +49,10 @@
             -moz-transition-timing-function: ease;
             -o-transition-timing-function: ease;
             transition-timing-function: ease;
-            -webkit-transition-duration: 0.2s;
-            -moz-transition-duration: 0.2s;
-            -o-transition-duration: 0.2s;
-            transition-duration: 0.2s;
+            -webkit-transition-duration: 0.125s;
+            -moz-transition-duration: 0.125s;
+            -o-transition-duration: 0.125s;
+            transition-duration: 0.125s;
 
             pointer-events: none;
         }

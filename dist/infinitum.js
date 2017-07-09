@@ -532,7 +532,6 @@
 
             this._prepareItems(true);
 
-            //simulováním pohybu (třetí param. fakeMove) se položky zařadí na správné pozice
             this._fakeMove(false);
         }
 
@@ -543,8 +542,9 @@
      * Přenastaví aktivní položku.
      *
      * $item (jQuery | Number | String) - jQuery objekt s položkou, její index nebo selektor
+     * noAnim (Boolean) - bez animace
      */
-    Infinitum.prototype.setCurrent = function ($item /*jQuery | Number*/) {
+    Infinitum.prototype.setCurrent = function ($item /*jQuery | Number*/, noAnim /*Boolean*/) {
 
         this._generateSelfRect();
 
@@ -557,7 +557,18 @@
             $item = this.$items.filter($item);
         }
 
-        this._setCurrent($item);
+        this._setCurrent($item, false, false, false, noAnim);
+
+        if (noAnim) {
+
+            var fade = this.options.fade;
+
+            this.options.fade = false;
+
+            this._move(this._lastDir === Infinitum.DIR.LEFT ? -1 : 1, false, true);
+
+            this.options.fade = fade;
+        }
     };
 
     Infinitum.prototype.on = function (event /*String*/, handler /*Function*/) {
