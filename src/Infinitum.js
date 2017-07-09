@@ -2022,13 +2022,13 @@
 
                 addedWidth += width;
 
-                _this._breakItem($(this), "end");
+                _this._breakItem($(this), POSITION.END);
             }
         });
 
         if (animationDone) {
 
-            this._clearHideStates("start");
+            this._clearHideStates(POSITION.START);
         }
     };
 
@@ -2089,13 +2089,13 @@
 
                 addedWidth += width;
 
-                _this._breakItem($(this), "start");
+                _this._breakItem($(this), POSITION.START);
             }
         });
 
         if (animationDone) {
 
-            this._clearHideStates("end");
+            this._clearHideStates(POSITION.END);
         }
     };
 
@@ -2103,17 +2103,11 @@
 
         //odstranit předchozí přesunutí
         $item.off(TRANSITIONEND + this.NS);
+        clearTimeout($item.data(DATA.fakeTransitionTimeout + this.NS));
 
-        var lastFakeTransition = $item.data(DATA.fakeTransitionTimeout + this.NS);
+        var $sibling = toPosition === POSITION.START ? this.findNext($item) : this.findPrev($item),
 
-        if (lastFakeTransition) {
-
-            clearTimeout(lastFakeTransition);
-        }
-
-        var $sibling = toPosition === "start" ? this.findNext($item) : this.findPrev($item),
-
-            width = toPosition === "start" ? $item.outerWidth() : -$sibling.outerWidth(),
+            width = toPosition === POSITION.START ? $item.outerWidth() : -$sibling.outerWidth(),
 
             left = $sibling.data(DATA.willLeft + this.NS) - width;
 
@@ -2126,14 +2120,14 @@
 
         var opacity = $item.css("opacity");
 
-        $item.addClass(toPosition === "start" ? CLASS.toStart : CLASS.toEnd)
-            .removeClass(toPosition === "start" ? CLASS.toEnd : CLASS.toStart)
+        $item.addClass(toPosition === POSITION.START ? CLASS.toStart : CLASS.toEnd)
+            .removeClass(toPosition === POSITION.START ? CLASS.toEnd : CLASS.toStart)
             .removeClass(CLASS.hide);
 
         //konečná hodnota (kam bude po zmizení položka přesunuta) - pro případy, kdy se potřebujeme tváři, jako by byla položka už na daném místě
         $item.data(DATA.willLeft + this.NS, left);
 
-        var hardBreak = (toPosition === "end" && this.options.fade === POSITION.END) || (toPosition === "start" && this.options.fade === POSITION.START),
+        var hardBreak = (toPosition === POSITION.END && this.options.fade === POSITION.END) || (toPosition === POSITION.START && this.options.fade === POSITION.START),
 
             fakeTransitionEnd,
 
@@ -2146,20 +2140,20 @@
 
                 clearTimeout(fakeTransitionEnd);
 
-                var CSS = {},
+                var CSS = {}, data = {},
 
                     value = $item.data(DATA.willLeft + this.NS) - $item.data(DATA.offset + this.NS);
 
                 CSS[TRANSFORM_PROP] = T3D ? "translate3d(" + value + "px, 0px, 0px)" : "translateX(" + value + "px)";
                 CSS[TRANSITION_PROP] = hardBreak || this.options.fade === true ? "" : "none";
 
-                $item.data(DATA.translate + this.NS, value)
-                    .css(CSS);
+                data[DATA.translate + this.NS] = value;
+                data[DATA.fakeTransitionTimeout + this.NS] = null;
 
-                $item.data(DATA.fakeTransitionTimeout + this.NS, null);
+                $item.data(data).css(CSS);
 
                 $item.removeClass(CLASS.hide)
-                    .removeClass(toPosition === "start" ? CLASS.toStart : CLASS.toEnd);
+                    .removeClass(toPosition === POSITION.START ? CLASS.toStart : CLASS.toEnd);
 
                 $item.off(TRANSITIONEND + this.NS);
 
@@ -2194,16 +2188,17 @@
 
     Infinitum.prototype._breakItemNoFade = function ($item, left) {
 
-        var CSS = {},
+        var CSS = {}, data = {},
 
             value = left - $item.data(DATA.offset + this.NS);
 
         CSS[TRANSFORM_PROP] = T3D ? "translate3d(" + value + "px, 0px, 0px)" : "translateX(" + value + "px)";
         CSS[TRANSITION_PROP] = "";
 
-        $item.css(CSS)
-            .data(DATA.translate + this.NS, value)
-            .data(DATA.willLeft + this.NS, left);
+        data[DATA.translate + this.NS] = value;
+        data[DATA.willLeft + this.NS] = left;
+
+        $item.css(CSS).data(data);
     };
 
     /*
@@ -2218,11 +2213,13 @@
 
         var _this = this;
 
-        (position === "end" ? this.$rightItemsOver : this.$leftItemsOver).each(function () {
+        (position === POSITION.END ? this.$rightItemsOver : this.$leftItemsOver).each(function () {
 
-            var $this = $t(this);
+            var $this = $t(this),
 
-            if (position === "end" ? $this.hasClass(CLASS.toStart) : $this.hasClass(CLASS.toEnd)) {
+                data = {};
+
+            if (position === POSITION.END ? $this.hasClass(CLASS.toStart) : $this.hasClass(CLASS.toEnd)) {
 
                 return;
             }
@@ -2230,12 +2227,14 @@
             $this.off(TRANSITIONEND + _this.NS);
 
             clearTimeout($this.data(DATA.fakeTransitionTimeout + _this.NS));
-            $this.data(DATA.fakeTransitionTimeout + _this.NS, null);
 
             $this.removeClass(CLASS.hide)
-                .removeClass(position === "end" ? CLASS.toEnd : CLASS.toStart);
+                .removeClass(position === POSITION.END ? CLASS.toEnd : CLASS.toStart);
 
-            $this.data(DATA.willLeft + _this.NS, $this.data(DATA.translate + _this.NS) + $this.data(DATA.offset + _this.NS));
+            data[DATA.fakeTransitionTimeout + _this.NS] = null;
+            data[DATA.willLeft + _this.NS] = $this.data(DATA.translate + _this.NS) + $this.data(DATA.offset + _this.NS);
+
+            $this.data(data);
         });
     };
 
