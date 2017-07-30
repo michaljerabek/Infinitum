@@ -317,7 +317,11 @@
 
         /* Number - sledovat změny velikosti widgetu
          */
-        watchContainer: 100,
+        watchContainer: 0,
+
+        /* Number - sledovat změny velikosti položek
+         */
+        watchItems: 0,
 
         debug: false
     };
@@ -993,6 +997,36 @@
                     lastSize = currentSize;
                 }
             }.bind(this), this.options.watchContainer);
+        }
+
+        if (this.options.watchItems) {
+
+            var lastSizes = this.$items.map(function () {
+
+                return getRect(this);
+            });
+
+            this._containerWatcher = setInterval(function () {
+
+                var currentSizes = this.$items.map(function () {
+
+                        return getRect(this);
+                    }),
+
+                    l = 0;
+
+                for (l; l < lastSizes.length; l++) {
+
+                    if (currentSizes[l].width !== lastSizes[l].width || currentSizes[l].height !== lastSizes[l].height) {
+
+                        this.softRefresh();
+
+                        lastSizes = currentSizes;
+
+                        return;
+                    }
+                }
+            }.bind(this), this.options.watchItems);
         }
     };
 
