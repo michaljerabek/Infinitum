@@ -1006,7 +1006,7 @@
                 return getRect(this);
             });
 
-            this._containerWatcher = setInterval(function () {
+            this._itemsWatcher = setInterval(function () {
 
                 var currentSizes = this.$items.map(function () {
 
@@ -1085,6 +1085,7 @@
     Infinitum.prototype._destroyEvents = function () {
 
         clearInterval(this._containerWatcher);
+        clearInterval(this._itemsWatcher);
 
         this.$self.off(this.NS);
 
