@@ -315,6 +315,10 @@
          */
         wheelThrottle: 40,
 
+        /* Number - sledovat změny velikosti widgetu
+         */
+        watchContainer: 100,
+
         debug: false
     };
 
@@ -385,7 +389,7 @@
 
     Infinitum.FAKE_TRANSITION_TIMEOUT = 700;
 
-    Infinitum.CAPTURE_WHEEL_TIMEOUT = 350;
+    Infinitum.CAPTURE_WHEEL_TIMEOUT = 375;
 
 
     Infinitum.prototype.init = function (options /*Object?*/, destroy /*Boolean?*/) {
@@ -974,27 +978,50 @@
 
         }.bind(this));
 
+        if (this.options.watchContainer) {
+
+            var lastSize = getRect(this.$self);
+
+            this._containerWatcher = setInterval(function () {
+
+                var currentSize = getRect(this.$self);
+
+                if (currentSize.width !== lastSize.width || currentSize.height !== lastSize.height) {
+
+                    this.softRefresh();
+
+                    lastSize = currentSize;
+                }
+            }.bind(this), this.options.watchContainer);
+        }
+    };
+
+    Infinitum.prototype._initGlobalEvents = function () {
+
         var resizeDebounce = null,
 
             lastDocHeight = document.documentElement.clientHeight,
             lastDocWidth = document.documentElement.clientWidth;
 
-        $win.on("resize" + this.NS, function () {
+        $win.on("resize." + NS, function () {
 
             if (lastDocWidth !== document.documentElement.clientWidth || lastDocHeight !== document.documentElement.clientHeight) {
 
                 clearTimeout(resizeDebounce);
 
-                resizeDebounce = setTimeout(this.softRefresh.bind(this), 50);
+                resizeDebounce = setTimeout(function () {
+
+                    instances.forEach(function (instance) {
+                        instance.softRefresh();
+                    });
+                }, 50);
 
                 lastDocHeight = document.documentElement.clientHeight;
                 lastDocWidth = document.documentElement.clientWidth;
             }
 
         }.bind(this));
-    };
 
-    Infinitum.prototype._initGlobalEvents = function () {
 
         $win.on("touchmove." + NS, function (event) {
 
@@ -1023,6 +1050,8 @@
 
     Infinitum.prototype._destroyEvents = function () {
 
+        clearInterval(this._containerWatcher);
+
         this.$self.off(this.NS);
 
         $win.on(this.NS);
@@ -1030,7 +1059,8 @@
         if (!instances.length) {
 
             $win.off("touchstart." + NS)
-                .off("scroll." + NS);
+                .off("scroll." + NS)
+                .off("resize." + NS);
         }
     };
 
