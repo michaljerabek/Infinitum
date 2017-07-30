@@ -761,16 +761,26 @@
         this._generateSelfRect();
     };
 
-    Infinitum.prototype._generateSelfRect = function () {
+    Infinitum.prototype._generateSelfRect = function (getValue) {
 
-        this._selfRect = {};
-        this._origSelfRect = this.$self[0].getBoundingClientRect();
+        this._origSelfRect = getRect(this.$self);
 
-        var box = this.$self.css(["padding-left", "padding-right", "border-left-width", "border-right-width"]);
+        var box = this.$self.css(["padding-left", "padding-right", "border-left-width", "border-right-width"]),
 
-        this._selfRect.left = this._origSelfRect.left + parseFloat(box["padding-left"]) + parseFloat(box["border-left-width"]);
-        this._selfRect.right = this._origSelfRect.right - parseFloat(box["padding-right"]) - parseFloat(box["border-right-width"]);
-        this._selfRect.center = this._origSelfRect.left + ((this._origSelfRect.right - this._origSelfRect.left) / 2);
+            rect = {};
+
+        rect.left = this._origSelfRect.left + parseFloat(box["padding-left"]) + parseFloat(box["border-left-width"]);
+        rect.right = this._origSelfRect.right - parseFloat(box["padding-right"]) - parseFloat(box["border-right-width"]);
+        rect.center = this._origSelfRect.left + ((this._origSelfRect.right - this._origSelfRect.left) / 2);
+        rect.width = this._origSelfRect.width;
+        rect.height = this._origSelfRect.height;
+
+        if (getValue) {
+
+            return rect;
+        }
+
+        this._selfRect = rect;
     };
 
     Infinitum.prototype._prepareTrack = function () {
@@ -836,6 +846,14 @@
             totalWidth = lastLeft;
 
         }.bind(this));
+
+        if (this.options.watchItems) {
+
+            this._lastSizes = this.$items.map(function () {
+
+                return getRect(this);
+            });
+        }
 
         this._sortItems();
 
@@ -984,27 +1002,18 @@
 
         if (this.options.watchContainer) {
 
-            var lastSize = getRect(this.$self);
-
             this._containerWatcher = setInterval(function () {
 
-                var currentSize = getRect(this.$self);
+                var currentSelfRect = this._generateSelfRect(true);
 
-                if (currentSize.width !== lastSize.width || currentSize.height !== lastSize.height) {
+                if (currentSelfRect.width !== this._selfRect.width || currentSelfRect.height !== this._selfRect.height) {
 
                     this.softRefresh();
-
-                    lastSize = currentSize;
                 }
             }.bind(this), this.options.watchContainer);
         }
 
         if (this.options.watchItems) {
-
-            var lastSizes = this.$items.map(function () {
-
-                return getRect(this);
-            });
 
             this._itemsWatcher = setInterval(function () {
 
@@ -1015,13 +1024,11 @@
 
                     l = 0;
 
-                for (l; l < lastSizes.length; l++) {
+                for (l; l < this._lastSizes.length; l++) {
 
-                    if (currentSizes[l].width !== lastSizes[l].width || currentSizes[l].height !== lastSizes[l].height) {
+                    if (currentSizes[l].width !== this._lastSizes[l].width || currentSizes[l].height !== this._lastSizes[l].height) {
 
                         this.softRefresh();
-
-                        lastSizes = currentSizes;
 
                         return;
                     }
