@@ -1006,7 +1006,7 @@
 
                 var currentSelfRect = this._generateSelfRect(true);
 
-                if (currentSelfRect.width !== this._selfRect.width || currentSelfRect.height !== this._selfRect.height) {
+                if (currentSelfRect.width.toFixed(2) !== this._selfRect.width.toFixed(2) || currentSelfRect.height.toFixed(2) !== this._selfRect.height.toFixed(2)) {
 
                     this.softRefresh();
                 }
@@ -1026,7 +1026,7 @@
 
                 for (l; l < this._lastSizes.length; l++) {
 
-                    if (currentSizes[l].width !== this._lastSizes[l].width || currentSizes[l].height !== this._lastSizes[l].height) {
+                    if (currentSizes[l].width.toFixed(2) !== this._lastSizes[l].width.toFixed(2) || currentSizes[l].height.toFixed(2) !== this._lastSizes[l].height.toFixed(2)) {
 
                         this.softRefresh();
 
