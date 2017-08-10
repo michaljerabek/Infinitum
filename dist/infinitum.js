@@ -350,6 +350,8 @@
 
         this.initialized = false;
 
+        this._hasPointer = false;
+
         this._animate = this._animate.bind(this);
 
         this._shouldCancelRAF = true;
@@ -1116,7 +1118,7 @@
         this._byMouse = !!event.type.match(/mouse/);
         this._byTouch = !!event.type.match(/touch/);
 
-        if (this._hasPointer || (this._byMouse && event.button !== 0)) {
+        if (this._hasPointer !== false || (this._byMouse && event.button !== 0)) {
 
             event.preventDefault();
 
@@ -1168,7 +1170,7 @@
 
     Infinitum.prototype._onPointerMove = function (event) {
 
-        if (!this._hasPointer) {
+        if (this._hasPointer === false) {
 
             event.preventDefault();
 
@@ -1261,7 +1263,7 @@
 
     Infinitum.prototype._onPointerEnd = function (event) {
 
-        if ((this._byMouse && event.button !== 0) || (!this._hasPointer && event.type !== "click")) {
+        if ((this._byMouse && event.button !== 0) || (this._hasPointer === false && event.type !== "click")) {
 
             return;
         }
