@@ -680,7 +680,7 @@
      */
     Infinitum.prototype.dragging = function () {
 
-        return this._hasPointer;
+        return this._hasPointer !== false;
     };
 
     Infinitum.prototype._initOptions = function (options) {
@@ -1188,7 +1188,7 @@
             diffX = clientX - this._lastClientX;
 
         //vertikální posun na dotykových zařízeních?
-        if (this._byTouch && this._fixVertical === null) {
+        if (this._byTouch && this._fixVertical === null && event.originalEvent.touches.length === 1) {
 
             this._fixVertical = Math.abs(clientY - this._lastClientY) + 1 > Math.abs(diffX);
         }
