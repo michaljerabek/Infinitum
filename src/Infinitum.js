@@ -853,9 +853,9 @@
 
         if (this.options.watchItems) {
 
-            this._lastSizes = this.$items.get().map(function () {
+            this._lastSizes = this.$items.get().map(function (item) {
 
-                return getRect(this);
+                return getRect(item);
             });
         }
 
