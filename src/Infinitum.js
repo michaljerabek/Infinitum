@@ -397,6 +397,8 @@
 
     Infinitum.CAPTURE_WHEEL_TIMEOUT = 375;
 
+    Infinitum.LOW_PERF_FIX_INTERVAL = 1000;
+
 
     Infinitum.prototype.init = function (options /*Object?*/, destroy /*Boolean?*/) {
 
@@ -851,7 +853,7 @@
 
         if (this.options.watchItems) {
 
-            this._lastSizes = this.$items.map(function () {
+            this._lastSizes = this.$items.get().map(function () {
 
                 return getRect(this);
             });
@@ -1037,6 +1039,8 @@
                 }
             }.bind(this), this.options.watchItems);
         }
+
+        this._lowPerfFixer = setInterval(this._fixLowPerf.bind(this), Infinitum.LOW_PERF_FIX_INTERVAL);
     };
 
     Infinitum.prototype._initGlobalEvents = function () {
@@ -1095,6 +1099,7 @@
 
         clearInterval(this._containerWatcher);
         clearInterval(this._itemsWatcher);
+        clearInterval(this._lowPerfFixer);
 
         this.$self.off(this.NS);
 
@@ -1781,6 +1786,16 @@
         }
 
         this._move(this._lastDir === Infinitum.DIR.LEFT ? -1 : 1, true, true, fixing);
+    };
+
+    Infinitum.prototype._fixLowPerf = function () {
+
+        if (!this._forceCancelRAF || this._hasPointer) {
+
+            return;
+        }
+
+        this._move(0, false, true, true);
     };
 
     /*

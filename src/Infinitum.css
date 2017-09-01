@@ -1,5 +1,6 @@
 .infinitum {
     touch-action: manipulation;
+    touch-action: pan-y;
 }
 
     .infinitum__track {
