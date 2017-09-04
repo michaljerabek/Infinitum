@@ -2440,10 +2440,10 @@
 
         var itemPos = rect.left + (dataLeft - cssLeft) - this._selfRect.left - ((this._selfRect.right - this._selfRect.left) / 2) + (rect.width / 2);
 
-        if (!itemPos) {
-
-            return;
-        }
+//        if (!itemPos) {
+//
+//            return;
+//        }
 
         this._moveTrack(-itemPos, !jumpToPosition, speedByPointer);
     };
@@ -2492,17 +2492,17 @@
 
         var itemPos = rect.right + (dataLeft - cssLeft) - this._selfRect.right;
 
-        if (!itemPos) {
-
-            var currentItemIsNotFirst = this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
-
-            if (currentItemIsNotFirst) {
-
-                this._fixItemsPositions();
-            }
-
-            return;
-        }
+//        if (!itemPos) {
+//
+//            var currentItemIsNotFirst = this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
+//
+//            if (currentItemIsNotFirst) {
+//
+//                this._fixItemsPositions();
+//            }
+//
+//            return;
+//        }
 
         this._moveTrack(-itemPos, !jumpToPosition, speedByPointer);
     };
@@ -2549,17 +2549,17 @@
 
         var itemPos = rect.left + (dataLeft - cssLeft) - this._selfRect.left;
 
-        if (!itemPos) {
-
-            var currentItemIsNotFirst = this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current);
-
-            if (currentItemIsNotFirst) {
-
-                this._fixItemsPositions();
-            }
-
-            return;
-        }
+//        if (!itemPos) {
+//
+//            var currentItemIsNotFirst = this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current);
+//
+//            if (currentItemIsNotFirst) {
+//
+//                this._fixItemsPositions();
+//            }
+//
+//            return;
+//        }
 
         this._moveTrack(-itemPos, !jumpToPosition, speedByPointer);
     };
