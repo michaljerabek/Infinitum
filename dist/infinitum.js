@@ -1039,8 +1039,6 @@
                 }
             }.bind(this), this.options.watchItems);
         }
-
-        this._lowPerfFixer = setInterval(this._fixLowPerf.bind(this), Infinitum.LOW_PERF_FIX_INTERVAL);
     };
 
     Infinitum.prototype._initGlobalEvents = function () {
@@ -1099,7 +1097,6 @@
 
         clearInterval(this._containerWatcher);
         clearInterval(this._itemsWatcher);
-        clearInterval(this._lowPerfFixer);
 
         this.$self.off(this.NS);
 
@@ -1115,7 +1112,9 @@
 
     Infinitum.prototype._onPointerStart = function (event) {
 
-        if (this.disabled) {
+        if (this.disabled || this._skipMouse) {
+
+            this._skipMouse = false;
 
             return;
         }
@@ -1160,17 +1159,21 @@
 
         this._trackMoved = false;
 
-        $win.on("mousemove" + this.NS, this._onPointerMove.bind(this))
-            .one("mouseup" + this.NS, this._onPointerEnd.bind(this));
+        if (this._byMouse) {
+
+            $win.on("mousemove" + this.NS, this._onPointerMove.bind(this))
+                .one("mouseup" + this.NS, this._onPointerEnd.bind(this));
+
+            event.preventDefault();
+
+            return;
+        }
 
         this.$self
             .on("touchmove" + this.NS, this._onPointerMove.bind(this))
             .one("touchend" + this.NS, this._onPointerEnd.bind(this));
 
-        if (!this._byTouch) {
-
-            event.preventDefault();
-        }
+        this._skipMouse = true;
     };
 
     Infinitum.prototype._onPointerMove = function (event) {
@@ -1330,7 +1333,12 @@
             var currentPos = getRect(this.$currentItem[0]).left,
                 tappedPos = getRect($item[0]).left;
 
-            this._lastDir = currentPos > tappedPos ? Infinitum.DIR.RIGHT : Infinitum.DIR.LEFT;
+            this._lastDir =
+                currentPos === tappedPos ?
+                    this.options.mode === POSITION.END ?
+                        Infinitum.DIR.RIGHT : Infinitum.DIR.LEFT :
+                    currentPos > tappedPos ?
+                        Infinitum.DIR.RIGHT : Infinitum.DIR.LEFT;
 
             if (this.$currentItem[0] === $item[0]) {
 
@@ -1786,16 +1794,6 @@
         }
 
         this._move(this._lastDir === Infinitum.DIR.LEFT ? -1 : 1, true, true, fixing);
-    };
-
-    Infinitum.prototype._fixLowPerf = function () {
-
-        if (!this._forceCancelRAF || this._hasPointer) {
-
-            return;
-        }
-
-        this._move(0, false, true, true);
     };
 
     /*
