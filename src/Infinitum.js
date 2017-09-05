@@ -488,6 +488,8 @@
             .removeClass(CLASS.speed3)
             .removeData([DATA.willTranslate + this.NS, DATA.fakeTransitionTimeout + this.NS]);
 
+        this._trackXShouldBe = 0;
+
         this.$items.each(function (i, item) {
 
             var $this = $t(item);
@@ -796,6 +798,8 @@
         this._speed = [7, 7, 7, 7, 7];
 
         this._setTrackPosition(0, false);
+
+        this._trackXShouldBe = 0;
     };
 
     Infinitum.prototype._reverseItems = function () {
@@ -1148,10 +1152,6 @@
 
         this._fixVertical = null;
 
-        this._clearTrackTransition();
-
-        this._shouldCancelRAF = true;
-
         this._setPossibleCurrentItem(false, true, true);
 
         this._lastClientY = getClientValue(event, "y", this._pointerIndex);
@@ -1194,6 +1194,13 @@
             clientX = getClientValue(event, "x", this._pointerIndex),
 
             diffX = clientX - this._lastClientX;
+
+        if (this._fixVertical === null) {
+
+            this._clearTrackTransition();
+
+            this._fixVertical = this._byMouse ? false : this._fixVertical;
+        }
 
         //vertikální posun na dotykových zařízeních?
         if (this._byTouch && this._fixVertical === null && event.originalEvent.touches.length === 1) {
@@ -1292,6 +1299,8 @@
              return this._onTap(event);
         }
 
+        this._clearTrackTransition();
+
         this._draggingPrevented = false;
 
         this._setCurrent(this._findCurrentItem(), false, false, true);
@@ -1345,6 +1354,8 @@
                 this._setPossibleCurrentItem(true);
 
             } else {
+
+                this._clearTrackTransition();
 
                 if (this.options.wheelKeysTapSetCurrent) {
 
@@ -1463,6 +1474,8 @@
         var value = getTranslate(this.$track).x + x;
 
         this._setTrackPosition(value, animate, speedByPointer);
+
+        this._trackXShouldBe = value;
     };
 
     Infinitum.prototype._setTrackPosition = function (position, animate, speedByPointer) {
@@ -2440,10 +2453,10 @@
 
         var itemPos = rect.left + (dataLeft - cssLeft) - this._selfRect.left - ((this._selfRect.right - this._selfRect.left) / 2) + (rect.width / 2);
 
-//        if (!itemPos) {
-//
-//            return;
-//        }
+        if (!itemPos && this._trackXShouldBe === getTranslate(this.$track).x) {
+
+            return;
+        }
 
         this._moveTrack(-itemPos, !jumpToPosition, speedByPointer);
     };
@@ -2492,17 +2505,17 @@
 
         var itemPos = rect.right + (dataLeft - cssLeft) - this._selfRect.right;
 
-//        if (!itemPos) {
-//
-//            var currentItemIsNotFirst = this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
-//
-//            if (currentItemIsNotFirst) {
-//
-//                this._fixItemsPositions();
-//            }
-//
-//            return;
-//        }
+        if (!itemPos && this._trackXShouldBe === getTranslate(this.$track).x) {
+
+            var currentItemIsNotFirst = this.$willEndItem.length && !this.$willEndItem.hasClass(CLASS.current);
+
+            if (currentItemIsNotFirst) {
+
+                this._fixItemsPositions();
+            }
+
+            return;
+        }
 
         this._moveTrack(-itemPos, !jumpToPosition, speedByPointer);
     };
@@ -2549,17 +2562,17 @@
 
         var itemPos = rect.left + (dataLeft - cssLeft) - this._selfRect.left;
 
-//        if (!itemPos) {
-//
-//            var currentItemIsNotFirst = this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current);
-//
-//            if (currentItemIsNotFirst) {
-//
-//                this._fixItemsPositions();
-//            }
-//
-//            return;
-//        }
+        if (!itemPos && this._trackXShouldBe === getTranslate(this.$track).x) {
+
+            var currentItemIsNotFirst = this.$willStartItem.length && !this.$willStartItem.hasClass(CLASS.current);
+
+            if (currentItemIsNotFirst) {
+
+                this._fixItemsPositions();
+            }
+
+            return;
+        }
 
         this._moveTrack(-itemPos, !jumpToPosition, speedByPointer);
     };
