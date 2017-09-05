@@ -459,7 +459,7 @@
 
         this._shouldCancelRAF = true;
         this._forceCancelRAF = true;
-        cancelAnimationFrame(this._animate);
+        cancelAnimationFrame(this._lastRAF);
 
         this._destroyEvents();
 
@@ -1383,7 +1383,6 @@
         this._clearTrackTransition();
 
         this._shouldCancelRAF = true;
-        cancelAnimationFrame(this._animate);
 
         this._lastDir = (event.originalEvent.detail || event.originalEvent.deltaY || event.originalEvent.deltaX || -event.originalEvent.wheelDelta) > 0 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
 
@@ -1424,7 +1423,6 @@
         this._clearTrackTransition();
 
         this._shouldCancelRAF = true;
-        cancelAnimationFrame(this._animate);
 
         this._lastDir = [37, 38].indexOf(event.which) === -1 ? Infinitum.DIR.LEFT: Infinitum.DIR.RIGHT;
 
@@ -1531,7 +1529,7 @@
 
         if (animate) {
 
-            requestAnimationFrame(this._animate);
+            this._lastRAF = requestAnimationFrame(this._animate);
         }
     };
 
@@ -1715,7 +1713,7 @@
         //druhá část: opravuje položky, které nemusí být vždy vyváženě vyrovnané
         if (animation && (!animationDone || (this.options.mode === POSITION.CENTER && animationDone && (!animationDoneAndCurrentNotOnStartEdge || !animationDoneAndCurrentNotOnEndEdge) && this.options.balanced && this.$items.length > 2))) {
 
-            requestAnimationFrame(this._animate);
+            this._lastRAF = requestAnimationFrame(this._animate);
 
             return;
         }
