@@ -1369,6 +1369,10 @@
                     this._moveToItem($item, false);
                 }
             }
+
+        } else {
+
+            this._setPossibleCurrentItem(true);
         }
 
         this._trackMoved = false;
