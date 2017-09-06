@@ -1118,15 +1118,14 @@
 
     Infinitum.prototype._onPointerStart = function (event) {
 
-        if (this.disabled || this._skipMouse) {
+        this._byMouse = !!event.type.match(/mouse/);
+
+        if (this.disabled || (this._skipMouse && this._byMouse)) {
 
             this._skipMouse = false;
 
             return;
         }
-
-        this._byMouse = !!event.type.match(/mouse/);
-        this._byTouch = !!event.type.match(/touch/);
 
         if (this._hasPointer !== false || (this._byMouse && event.button !== 0)) {
 
@@ -1134,6 +1133,8 @@
 
             return;
         }
+
+        this._byTouch = !this._byMouse;
 
         this._generateSelfRect();
 
