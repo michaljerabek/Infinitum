@@ -98,20 +98,22 @@
 
         }());
 
-    var getCurrentMatrix = function ($element) {
+    var lastMatrix = {
+        value: [],
+        is3d: false
+    },
 
-        var currentTransform = $element.css(TRANSFORM_PROP);
+    getCurrentMatrix = function ($element) {
+
+        var currentTransform = getComputedStyle($element[0])[TRANSFORM_PROP];
 
         currentTransform = currentTransform === "none" || !currentTransform ? "matrix(1, 0, 0, 1, 0, 0)" : currentTransform;
 
-        var matrix = currentTransform.replace(/^.*\((.*)\)$/g, "$1").split(/, +/),
+        lastMatrix.value = currentTransform.replace(/^.*\((.*)\)$/g, "$1").split(/, +/);
 
-            isMatrix3d = currentTransform.indexOf("3d") !== -1;
+        lastMatrix.is3d = currentTransform.indexOf("3d") !== -1;
 
-        return {
-            value: matrix,
-            is3d: isMatrix3d
-        };
+        return lastMatrix;
     },
 
     getTranslate = function ($element) {
@@ -1477,7 +1479,7 @@
 
     Infinitum.prototype._moveTrack = function (x, animate, speedByPointer) {
 
-        var value = getTranslate(this.$track).x + x;
+        var value = this._lastTrackX + x;
 
         this._setTrackPosition(value, animate, speedByPointer);
 
@@ -1490,7 +1492,7 @@
 
         this._clearTrackTransition();
 
-        this.$track.css(TRANSITION_PROP, animate ? "" : "none");
+        this.$track[0].style[TRANSITION_PROP] = animate ? "" : "none";
 
         if (animate) {
 
@@ -1510,7 +1512,7 @@
 
                     _this._clearTrackTransition();
 
-                    _this.$track.css(TRANSITION_PROP + "Duration", "");
+                    _this.$track[0].style[TRANSITION_PROP + "Duration"] = animate ? "" : "none";
 
                     _this._generateSelfRect();
 
@@ -1532,7 +1534,7 @@
 
         if (TRANSITIONEND || !animate) {
 
-            this.$track.css(TRANSFORM_PROP, T3D ? "translate3d(" + position + "px, 0px, 0px)" : "translateX(" + position + "px)");
+            this.$track[0].style[TRANSFORM_PROP] = T3D ? "translate3d(" + position + "px, 0px, 0px)" : "translateX(" + position + "px)";
         }
 
         this.$track.data(DATA.willTranslate + this.NS, position);
@@ -1550,21 +1552,21 @@
         this.$track.stop(true)
             .css({ textIndent: 0 })
             .animate({ textIndent: 1 }, {
-            duration: speed,
-            easing: "easeOutQuad." + NS,
+                duration: speed,
+                easing: "easeOutQuad." + NS,
 
-            step: function (step) {
+                step: function (step) {
 
-                var CSS = {};
+                    var CSS = {};
 
-                CSS[TRANSFORM_PROP] = "translateX(" + (initX + ((position - initX) * step)) + "px)";
+                    CSS[TRANSFORM_PROP] = "translateX(" + (initX + ((position - initX) * step)) + "px)";
 
-                this.$track.css(CSS);
+                    this.$track.css(CSS);
 
-            }.bind(this),
+                }.bind(this),
 
-            complete: onComplete
-        });
+                complete: onComplete
+            });
     };
 
     Infinitum.prototype._clearTrackTransition = function () {
@@ -1605,7 +1607,7 @@
 
         speed = Math.max(Math.min(speed, 650), 150);
 
-        this.$track.css(TRANSITION_PROP + "Duration", speed  + "ms");
+        this.$track[0].style[TRANSITION_PROP + "Duration"] = speed  + "ms";
 
         return speed;
     };
@@ -2230,7 +2232,7 @@
             return;
         }
 
-        var opacity = $item.css("opacity");
+        var opacity = getComputedStyle($item[0]).opacity;
 
         $item.addClass(toPosition === POSITION.START ? CLASS.toStart : CLASS.toEnd)
             .removeClass(toPosition === POSITION.START ? CLASS.toEnd : CLASS.toStart)
