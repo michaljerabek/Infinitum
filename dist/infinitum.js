@@ -1479,7 +1479,7 @@
 
     Infinitum.prototype._moveTrack = function (x, animate, speedByPointer) {
 
-        var value = this._lastTrackX + x;
+        var value = getTranslate(this.$track).x + x;
 
         this._setTrackPosition(value, animate, speedByPointer);
 
