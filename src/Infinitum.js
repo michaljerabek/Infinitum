@@ -1271,15 +1271,18 @@
 
     Infinitum.prototype._findTouchPointerIndex = function (event) {
 
-        var _this = this;
+        for (var t in event.originalEvent.touches) {
 
-        $.each(event.originalEvent.touches, function (i, touch) {
+            if (event.originalEvent.touches.hasOwnProperty(t)) {
 
-            if (touch.identifier === _this._hasPointer) {
+                if (event.originalEvent.touches[t].identifier === this._hasPointer) {
 
-                _this._pointerIndex = i;
+                    this._pointerIndex = t;
+
+                    break;
+                }
             }
-        });
+        }
     };
 
     Infinitum.prototype._onPointerEnd = function (event) {
@@ -2081,6 +2084,8 @@
 
         var _this = this,
 
+            itemsToBreak = [],
+
             addedWidth = 0; //kolik px už bylo přidáno na konec
 
         this.$leftItemsOver.each(function () {
@@ -2134,8 +2139,13 @@
 
                 addedWidth += width;
 
-                _this._breakItem($(this), POSITION.END);
+                itemsToBreak.push($(this));
             }
+        });
+
+        itemsToBreak.forEach(function ($item) {
+
+            _this._breakItem($item, POSITION.END);
         });
 
         if (animationDone) {
@@ -2147,6 +2157,8 @@
     Infinitum.prototype._moveRightItemsOverToTheStart = function (animationDone, animationDoneAndCurrentNotLast, byFakeMove) {
 
         var _this = this,
+
+            itemsToBreak = [],
 
             addedWidth = 0; //kolik px už bylo přidáno na začátek
 
@@ -2201,8 +2213,13 @@
 
                 addedWidth += width;
 
-                _this._breakItem($(this), POSITION.START);
+                itemsToBreak.push($(this));
             }
+        });
+
+        itemsToBreak.forEach(function ($item) {
+
+            _this._breakItem($item, POSITION.START);
         });
 
         if (animationDone) {
