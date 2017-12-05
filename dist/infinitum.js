@@ -345,8 +345,6 @@
 
     var Infinitum = window.Infinitum = function Infinitum(options) {
 
-        instances.push(this);
-
         this.id = NS + idCounter++;
         this.NS = "." + this.id;
 
@@ -409,6 +407,8 @@
 
             this.destroy();
         }
+
+        instances.push(this);
 
         this._animate = this._animate.bind(this);
 
