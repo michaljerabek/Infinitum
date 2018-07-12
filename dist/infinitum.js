@@ -1138,6 +1138,8 @@
 
         this._byTouch = !this._byMouse;
 
+        this._skipNonmove = true;
+
         this._generateSelfRect();
 
         this.$self.focus();
@@ -1199,6 +1201,15 @@
             clientX = getClientValue(event, "x", this._pointerIndex),
 
             diffX = clientX - this._lastClientX;
+
+        if (!diffX && this._skipNonmove) {
+
+            this._skipNonmove = false;
+
+            return;
+        }
+
+        this._skipNonmove = false;
 
         if (this._fixVertical === null) {
 
